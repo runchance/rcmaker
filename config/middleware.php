@@ -1,0 +1,20 @@
+<?php
+return [
+	//控制器中间件
+	'middleware'=>[
+		//全局中间件
+		''=>[
+			//support\middleware\AuthCheck::class,
+			//['handle'=>'AccessControlTest']
+		], 
+		//应用中间件
+		'index'=>[
+			//support\middleware\Hook::class
+		] 
+	],
+	//静态文件中间件
+	'static_middleware'=>[
+		//support\middleware\staticfile::class
+	]
+];
+?>

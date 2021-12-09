@@ -1,0 +1,7 @@
+/vendor
+composer.lock
+session_*
+*.log
+*.pid
+.env
+test.php

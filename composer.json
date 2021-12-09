@@ -1,0 +1,37 @@
+{
+  "name": "runchance/rcmaker",
+  "description": "rcmaker is oneness of fpm and cli high performance php framework, support workerman and swoole run mode",
+  "keywords": [
+    "php http framework",
+    "oneness of fpm and cli mode",
+    "high performance",
+    "standalone http service",
+    "standalone php process manager"
+  ],
+  "homepage": "http://rcmaker.runchance.com",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "wobless",
+      "email": "wobless@runchance.com",
+      "homepage": "https://github.com/runchance",
+      "role": "Developer"
+    }
+  ],
+  "type": "project",
+  "require": {
+    "php": ">=7.2",
+    "runchance/rcmaker-framework": "^1.0"
+  },
+  "suggest": {
+    "ext-event": "For better performance. "
+  },
+  "autoload": {
+    "psr-4": {
+      "app\\": "apps/",
+      "support\\": "support/"
+    }
+  }
+
+
+}

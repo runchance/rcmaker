@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>单文件、多文件上传示例</title>
+</head>
+<body>
+<form action="/index/file" method="post" enctype="multipart/form-data">
+  <input type="file" name="upload1" /><br/>
+  <input type="file" name="upload2" /><br/>
+  <input type="file" name="upload[]" /><br/>
+  <input type="file" name="upload[]" /><br/>
+  <input type="file" name="upload[]" multiple="multiple"/><br/>
+  <input type="submit" value="上传文件"/>
+</form>
+</body>
+</html>
