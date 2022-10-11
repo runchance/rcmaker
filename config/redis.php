@@ -4,7 +4,7 @@ return [
     'default' => [
         'type' =>rcEnv('redis.type', ''),
         'host' => rcEnv('redis.host', '127.0.0.1'),
-        'password' => rcEnv('redis.password', null),
+        'password' => rcEnv('redis.password', ''),
         'port' => rcEnv('redis.port', 6379),
         'database' => rcEnv('redis.database', 0),
     ],
@@ -20,6 +20,6 @@ return [
         'type' => rcEnv('redis-cluster.type', 'cluster'),
         'host'    => rcEnv('redis-cluster.host', []),
         'timeout' => rcEnv('redis-cluster.timeout', 2),
-        'password'    => rcEnv('redis-cluster.timeout', null),
+        'password'    => rcEnv('redis-cluster.password', null),
     ]
 ];

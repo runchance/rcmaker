@@ -13,11 +13,17 @@ function P($request,$config=[
     return pdf($request,$config);
 
 }
+function T($request,$guard = null,$cache = null){
+  return token($request,$guard,$cache);
+}
 function V($request,$template, $vars = []){
     return view($request,$template,$vars);
 }
 function M($request,$model=null,$app=null,$constructor=[]){
   return model($request,$model,$app,$constructor);
+}
+function ML($connect=null){
+  return mailer($connect);
 }
 function Q($request,$text,$format = 'png',$outfile = false, $level = 0, $size = 3, $margin = 4,$saveandprint=false){
   return qrcode($request,$text,$format,$outfile, $level, $size, $margin,$saveandprint);

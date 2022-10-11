@@ -1,7 +1,9 @@
 /vendor
+/runtime/*
 composer.lock
 session_*
 *.log
 *.pid
 .env
 test.php
+.user.ini

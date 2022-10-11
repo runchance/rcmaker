@@ -3,8 +3,9 @@ namespace support\middleware;
 class AuthCheck{
     public function handle($request, callable $next)
     {
-        if (!session('userinfo')) {
-            return redirect('/user/login');
+    	$session = $request->session();
+        if (!$session->get('userinfo')) {
+            return $request->redirect('/user/login');
         }
         return $next($request);
     }
