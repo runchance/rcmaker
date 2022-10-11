@@ -21,8 +21,7 @@
   "type": "project",
   "require": {
     "php": ">=7.3",
-    "runchance/rcmaker-framework": "^1.0",
-    "predis/predis": "^2.0"
+    "runchance/rcmaker-framework": "^2.0"
   },
   "suggest": {
     "ext-event": "For better performance. "
