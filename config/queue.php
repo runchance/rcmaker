@@ -1,7 +1,7 @@
 <?php
 return [
 	//队列设置
-	'enable' => true, //是否开启redis队列
+	'enable' => false, //是否开启redis队列
     'connection' => [
     	'default' => [
     		'type'=>'redis',
