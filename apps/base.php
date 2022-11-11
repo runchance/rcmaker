@@ -37,8 +37,8 @@ function GC($request, $key = null, $default = null){
 function S($request,$key = null, $default = null){
     return sessions($request,$key,$default);
 }
-function C($request,$name = 'captcha', $length = 5, $phrase=[], $charset = 'abcdefghijklmnpqrstuvwxyz123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'){
-    return captcha($request,$name, $length, $phrase, $charset);
+function C($request, $connect = 'default', $cache=null){
+    return captcha($request,$connect,$cache);
 }
 function D($request,$file,$download_name=''){
     return download($request,$file,$download_name);

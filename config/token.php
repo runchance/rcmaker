@@ -20,7 +20,7 @@ return [
         // 算法类型 HS256、HS384、HS512、RS256、RS384、RS512、ES256、ES384、EdDSA(Ed25519)
         'signer' => 'HS256',
         // 客户端校验类型 Bearer、 Header、 Get、 Post、 Cookie、 Session
-        'type' => 'Session',
+        'type' => 'Bearer',
         //传值校验
         'keyName' => 'token',
         // access令牌秘钥

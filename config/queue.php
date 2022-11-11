@@ -7,7 +7,6 @@ return [
     		'type'=>'redis',
 	        'host' => '127.0.0.1',
 	        'port' => 6379,
-	        'expire' => 0,
 	        'queue' => [     
 	        	'prefix' => '', // key 前缀    
 	            'max_attempts'  => 5, // 消费失败后，重试次数
@@ -18,7 +17,6 @@ return [
     		'type'=>'redis',
 	        'host' => '127.0.0.1',
 	        'port' => 6379,
-	        'expire' => 0,
 	        'queue' => [     
 	        	'prefix' => '', // key 前缀    
 	            'max_attempts'  => 5, // 消费失败后，重试次数
@@ -39,17 +37,28 @@ return [
     ],
     //消费进程设置
     'consumer_process'=>[
-    	'RC_consumer'  => [
-	        'handler'     => RC\Helper\Process\QueueConsumer::class,
-	        'count'       => 8, // 可以设置多进程同时消费
-	        'bootstrap' => [
-	        	RC\Helper\Redis\Raw::class //消费进程需要同时加载redis
-	        ],
-	        'constructor' => [
-	            // 消费者类目录
-	            'consumer_dir' => BASE_PATH . '/support/queue'
-	        ]
-	    ]
+    	 'RC_consumer_slow'  => [ //开启4个消费线程处理耗时任务
+            'handler'     => RC\Helper\Process\QueueConsumer::class,
+            'count'       => 4, // 可以设置多进程同时消费
+            'bootstrap' => [
+                RC\Helper\Redis\Raw::class //消费进程需要同时加载redis
+            ],
+            'constructor' => [
+                // 消费者类目录
+                'consumer_dir' => BASE_PATH . '/support/queue/slow'
+            ]
+        ],
+        'RC_consumer_fast'  => [ //开启8个消费线程处理常规任务
+            'handler'     => RC\Helper\Process\QueueConsumer::class,
+            'count'       => 8, // 可以设置多进程同时消费
+            'bootstrap' => [
+                RC\Helper\Redis\Raw::class //消费进程需要同时加载redis
+            ],
+            'constructor' => [
+                // 消费者类目录
+                'consumer_dir' => BASE_PATH . '/support/queue/fast'
+            ]
+        ]
     ],
     
 ];

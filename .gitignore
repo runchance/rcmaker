@@ -1,5 +1,6 @@
 /vendor
 /runtime/*
+/ssl
 composer.lock
 session_*
 *.log
