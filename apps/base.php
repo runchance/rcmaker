@@ -37,8 +37,11 @@ function GC($request, $key = null, $default = null){
 function S($request,$key = null, $default = null){
     return sessions($request,$key,$default);
 }
-function C($request, $connect = 'default', $cache=null){
-    return captcha($request,$connect,$cache);
+function C($request, $name = '', $connect = 'default', $closure = null,$cache=null){
+    return captcha($request,$name,$connect,$closure,$cache);
+}
+function CC($request,$name = '', $value = '',$connect = 'default', $cache=null){
+    return captchaCheck($request,$name,$value,$connect,$cache);
 }
 function D($request,$file,$download_name=''){
     return download($request,$file,$download_name);
