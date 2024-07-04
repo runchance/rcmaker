@@ -1,0 +1,14 @@
+[Unit]
+Description=rcmaker {name} Service
+After=network.target
+
+[Service]
+Type=forking
+ExecStart={phpPath} {rcmakerPatch} start -d
+ExecReload={phpPath} {rcmakerPatch} restart
+ExecStop={phpPath} {rcmakerPatch} stop
+RemainAfterExit=yes
+User={user}
+Group={user}
+[Install]
+WantedBy=multi-user.target
