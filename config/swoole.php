@@ -17,7 +17,7 @@ return [
     //启用压缩
     'http_compression'     => rcEnv('swoole.http_compression', true) ? true : false,
     //静态文件请求路径
-    'document_root'        => BASE_PATH . '/public',
+    'document_root'        => public_path(),
     //Swoole自带静态文件访问控制,最好不要开启,4.X版严重影响并发，框架带有CLI自动寻找静态文件（设置enable_static_file）
     'enable_static_handler'=> rcEnv('swoole.enable_static_handler', false) ? true : false,
     //静态文件访问控制(框架内置)
@@ -48,11 +48,11 @@ return [
     //子进程的所属用户组
     'group'                => rcEnv('swoole.group', ''),
     //pid文件路径
-    'pid_file'             => BASE_PATH . '/runtime/RC_Swoole.pid',
+    'pid_file'             => phar_path() . '/runtime/RC_Swoole.pid',
     //最大请求数,超出后会自动杀死进程并重新拉取一个新的进程
     'max_request'          => rcEnv('swoole.max_request', 1000000),
     //日志文件路径
-    'log_file'             => BASE_PATH . '/runtime/logs/RC_Swoole.log',
+    'log_file'             => phar_path() . '/runtime/logs/RC_Swoole.log',
     //日志等级
     'log_level'            => SWOOLE_LOG_INFO,
     //设置最大数据包尺寸，单位为字节

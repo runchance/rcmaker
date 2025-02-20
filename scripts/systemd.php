@@ -10,7 +10,15 @@
 		$usage = "Usage: \nphp ./scripts/systemd.php <serviceName>(Required) <op>(Optional) <seriveUser>(Optional) <PHP_BINARY>(Op Add Optional)\n<serviceName> Lowercase English letters within 20 digits\n<op> add, remove\n<seriveUser> root or other\n<PHP_BINARY> php binaries\n";
 		exit($usage);
 	}
+    $isBin = false;
 	$name = $argv[1];
+    if(strpos($name,"@bin")){
+        $isBin = true;
+        $name = str_replace("@bin","",$name);
+        if(!file_exists(ROOT_PATH."/build/rcmaker.bin")){
+            exit("./build/rcmaker.bin is not exists\n");
+        }
+    }
 	$op = $argv[2] ?? 'add';
     $user = $argv[3] ?? 'root';
 	$php = $argv[4] ?? PHP_BINARY;
@@ -42,7 +50,12 @@
     switch($op){
         case "add":
             $fileBuff = file_get_contents($serviceTpFile);
-            $fileBuff = str_replace(['{name}','{phpPath}','{rcmakerPatch}','{user}'],[$name,$php,ROOT_PATH."/index.php",$user],$fileBuff);
+            if(!$isBin){
+                $fileBuff = str_replace(['{name}','{phpPath}','{rcmakerPatch}','{user}'],[$name,$php,ROOT_PATH."/index.php",$user],$fileBuff);
+            }else{
+                $fileBuff = str_replace(['{name}','{phpPath}','{rcmakerPatch} ','{user}'],[$name,ROOT_PATH."/build/rcmaker.bin","",$user],$fileBuff);
+            }
+            
             file_put_contents($systemdPath,$fileBuff);
             exec("systemctl daemon-reload");
             exec("systemctl enable ".$name."");

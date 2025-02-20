@@ -13,7 +13,7 @@ return [
   //是否开启dubug模式,如果关闭，所有异常只显示配置error_msg,建议生产环境关闭[全局]
   'debug' => rcEnv('app.debug',false) ? true : false,
   //错误报告的级别[全局]
-  'error_types'=>E_ALL &~E_NOTICE &~E_STRICT &~E_DEPRECATED,
+  'error_types'=>E_ALL &~E_NOTICE &~E_DEPRECATED,
   //PHP错误输出,关闭debug后调用显示[全局]
   'error_msg' => rcEnv('app.error_msg','page error!'),
   //是否开启自动寻址路由,开启后/index.php?a=app&c=controller&m=method将失效 由 /app/controller/method 替代[全局+app]
@@ -22,8 +22,12 @@ return [
   'with_custom_route' => rcEnv('app.with_custom_route',false) ? true : false,
   //默认入口控制器(controller,method)[全局+app]
   'index' => rcEnv('app.index',['index','index']),
-
-
+  //public路径，如果自定义改动请用绝对路径
+  'public_path' => rcEnv('app.public_path',null),
+  //runtime路径，如果自定义改动请用绝对路径
+  'runtime_path' => rcEnv('app.public_path',null),
+  //ssl路径，如果自定义改动请用绝对路径
+  'runtime_path' => rcEnv('app.ssl_path',null),
   //独立APP设置
   /*
   'app' => [
