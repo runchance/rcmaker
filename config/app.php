@@ -22,12 +22,18 @@ return [
   'with_custom_route' => rcEnv('app.with_custom_route',false) ? true : false,
   //默认入口控制器(controller,method)[全局+app]
   'index' => rcEnv('app.index',['index','index']),
+  //config路径，如果自定义改动请用绝对路径
+  'config_path' => rcEnv('app.config_path',null),
   //public路径，如果自定义改动请用绝对路径
   'public_path' => rcEnv('app.public_path',null),
   //runtime路径，如果自定义改动请用绝对路径
-  'runtime_path' => rcEnv('app.public_path',null),
+  'runtime_path' => rcEnv('app.runtime_path',null),
   //ssl路径，如果自定义改动请用绝对路径
-  'runtime_path' => rcEnv('app.ssl_path',null),
+  'ssl_path' => rcEnv('app.ssl_path',null),
+  //app路径，如果自定义改动请用绝对路径
+  'apps_path' => rcEnv('app.apps_path',null),
+  //app命名空间前缀,如果打包二进制文件可以定义该项用于自动加载[全局]
+  'app_name' => rcEnv('app.app_name','app'),
   //独立APP设置
   /*
   'app' => [
