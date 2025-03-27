@@ -14,6 +14,21 @@ $sfxFileName = "php$version.micro.sfx";
 $sfxFile= ROOT_PATH."/build/".$sfxFileName;
 $sfxDownUrl = "rcmaker.runchance.com";
 $customIni = $argv[2] ?? "";
+if($customIni){
+    if(strpos($customIni,".ini") !== false){
+        if(!file_exists($customIni)){
+            echo "Custom ini file not exists.\r\n";
+            exit;
+        }
+        $customIni = file_get_contents($customIni);
+        if($customIni === false){
+            echo "Read custom ini file failed.\r\n";
+            exit;
+        }
+    }else{
+        $customIni = str_replace(";","\n",$customIni);
+    }
+}
 $customIniHeaderFile = ROOT_PATH."/scripts/custominiheader.bin";
 $exclude_pattern = "#^(?!.*(composer.json|/.github/|/.idea/|/.git/|/.setting/|/runtime/|/vendor-bin/|/build/|/scripts/))(.*)$#";
 $signature_algorithm = Phar::SHA256;
@@ -44,7 +59,7 @@ if (!class_exists(Phar::class, false)) {
 
 if (ini_get('phar.readonly')) {
     throw new RuntimeException(
-        "The 'phar.readonly' is 'On', build phar must setting it 'Off' or exec with 'php -d phar.readonly=0 ./webman $command'"
+        "The 'phar.readonly' is 'On', build phar must setting it 'Off' or exec with 'php -d phar.readonly=0'"
     );
 }
 
