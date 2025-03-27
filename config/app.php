@@ -22,8 +22,6 @@ return [
   'with_custom_route' => rcEnv('app.with_custom_route',false) ? true : false,
   //默认入口控制器(controller,method)[全局+app]
   'index' => rcEnv('app.index',['index','index']),
-  //config路径，如果自定义改动请用绝对路径
-  'config_path' => rcEnv('app.config_path',null),
   //public路径，如果自定义改动请用绝对路径
   'public_path' => rcEnv('app.public_path',null),
   //runtime路径，如果自定义改动请用绝对路径
