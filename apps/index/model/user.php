@@ -1,7 +1,6 @@
 <?php
 namespace app\index\model;
 use RC\Model\Think as ThinkModel;
-use RC\Model\Laravel as LaravelModel;
 class user extends ThinkModel
 {
     /**
@@ -17,8 +16,6 @@ class user extends ThinkModel
      * @var string
      */
     protected $pk = 'id';
-
-    protected $primaryKey = 'id';
 
     /**
      * Indicates if the model should be timestamped.

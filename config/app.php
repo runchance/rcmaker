@@ -22,6 +22,8 @@ return [
   'with_custom_route' => rcEnv('app.with_custom_route',false) ? true : false,
   //默认入口控制器(controller,method)[全局+app]
   'index' => rcEnv('app.index',['index','index']),
+  //默认应用名,多应用模式下当URL第一段不是应用名时,默认使用该应用[全局]
+  'default_app' => rcEnv('app.default_app','index'),
   //public路径，如果自定义改动请用绝对路径
   'public_path' => rcEnv('app.public_path',null),
   //runtime路径，如果自定义改动请用绝对路径
@@ -33,18 +35,24 @@ return [
   //app命名空间前缀,如果打包二进制文件可以定义该项用于自动加载[全局]
   'app_name' => rcEnv('app.app_name','app'),
   //独立APP设置
-  /*
+  
   'app' => [
+    /*
     //APP名称 对应./apps/index,设置独立,可继承以上部分设置（index,with_custom_route,route,count），绑定域名请设置 domains
     'index' => [
       //单应用绑定域名,如果设置该项,则全局路由 /app/controller/action中的 app将失效，
       //只能用绑定域名的 http(s)://domain/controller/action
-      "domains"=>['localhost','127.0.0.1'],
+      "domains"=>[],
     ],
     'api' =>[
-      "domains"=>['api.test.com'],
+      "domains"=>["api.test.com"],
+    ],
+    //多级应用示例,访问 /api/v2/index/test 可匹配 ./apps/api/v2/controller/index.php
+    'api\\v2' => [
+     "domains"=>["api.test.com"],
     ]
+    */
   ]
-  */
+  
 ];
 ?>

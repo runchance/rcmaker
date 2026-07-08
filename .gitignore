@@ -1,6 +1,9 @@
 /vendor
+/spc
+/build/*
 /runtime/*
 /ssl
+/doc
 composer.lock
 session_*
 *.log
@@ -8,3 +11,4 @@ session_*
 .env
 test.php
 .user.ini
+php*

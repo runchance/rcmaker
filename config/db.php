@@ -1,7 +1,7 @@
 <?php
 return [
   //默认框架
-  'default_frame' => rcEnv('db.default_frame','raw'),
+   'default_frame' => rcEnv('db.default_frame','medoo'),
   //默认数据库驱动
   'default' => rcEnv('db.default','mysql'),
   //数据库驱动列表
@@ -23,7 +23,6 @@ return [
         'prefix' => rcEnv('sqlite.prefix',''),
         'username' => rcEnv('sqlite.username',''),
         'password'=>rcEnv('sqlite.password',''),
-        'prefix' => rcEnv('sqlite.prefix',''),
         'options' => rcEnv('sqlite.options',[])
      ],
      'pgsql'=>[
@@ -63,6 +62,17 @@ return [
         'charset' => rcEnv('oracle.charset','utf8'),
         'prefix' => rcEnv('oracle.prefix',''),
         'options' => rcEnv('oracle.options',[])
+        
+     ],
+     'sybase'=>[
+        'host' => rcEnv('sybase.host','localhost'),
+        'port' => rcEnv('sybase.port','5000'),
+        'database' => rcEnv('sybase.database',''),
+        'username' => rcEnv('sybase.username',''),
+        'password' => rcEnv('sybase.password',''),
+        'charset' => rcEnv('sybase.charset','utf8'),
+        'prefix' => rcEnv('sybase.prefix',''),
+        'options' => rcEnv('sybase.options',[])
         
      ],
   ]

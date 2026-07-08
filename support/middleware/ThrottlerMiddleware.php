@@ -12,7 +12,7 @@ class ThrottlerMiddleware{
         $seconds = 60; // The time it takes the "bucket" to completely refill
         $cost = 1; // The number of tokens this action uses.
         if ($throttler->check($key, $capacity, $seconds, $cost) === false) {
-        	return $request->response(json_encode(['success' => false, 'msg' => '请求此时太频繁'], JSON_UNESCAPED_UNICODE),429,['Content-Type' => 'application/json']);
+	        return $request->response(json_encode(['success' => false, 'msg' => '请求此时太频繁', 'retry_after' => $throttler->getTokenTime()], JSON_UNESCAPED_UNICODE),429,['Content-Type' => 'application/json']);
         }
         return $next($request);
     }

@@ -20,8 +20,8 @@
   ],
   "type": "project",
   "require": {
-    "php": ">=7.3",
-    "runchance/rcmaker-framework": "^2.3"
+    "php": ">=8.1",
+    "runchance/rcmaker-framework": "^3.0"
   },
   "suggest": {
     "ext-event": "For better performance. "

@@ -1,7 +1,7 @@
 <?php
 return [
     'default_frame' => 'raw',
-    'default' => 'redis',
+    'default' => 'file',
     'driver' => [
         'file' => [
             'type' => 'File',

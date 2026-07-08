@@ -4,7 +4,7 @@ return [
         'expire'=>300,
         'namePrefix'=>'RC_CAPTCHA_',
         'length'=>5,
-        'store'=>'session',
+        'store'=>'cache',
         'phrase'=>[
             'width'=>150,
             'height'=>40,
@@ -12,7 +12,7 @@ return [
             'fingerprint'=>null
         ],
         'charset'=>'abcdefghijklmnpqrstuvwxyz123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        'autoDelte'=>true, //验证成功后是否自动删除缓存'
+        'autoDelete'=>true, //验证成功后是否自动删除缓存
         'return'=>'image'
     ],
     'session' => [

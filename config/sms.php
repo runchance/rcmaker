@@ -8,6 +8,6 @@ return [
 	'ipCheck'=>true, //是否验证IP
 	'mobileKey'=>'mobile', //获取前端传入的手机字段名
 	'codeKey'=>'code', //获取前端传入的短信验证码名
-	'autoDelte'=>true //验证成功后是否自动删除缓存
+	'autoDelete'=>true //验证成功后是否自动删除缓存
 ];
 ?>
