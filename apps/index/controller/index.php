@@ -4,7 +4,7 @@ namespace app\index\controller;
 class index{
 	public function index($req)
     {
-        return 'Hello rcmaker222!';
+        return 'Hello rcmaker!';
     }
 }
 ?>

@@ -4,7 +4,6 @@
 /runtime/*
 /ssl
 /doc
-composer.lock
 session_*
 *.log
 *.pid
@@ -12,3 +11,4 @@ session_*
 test.php
 .user.ini
 php*
+*composer*
