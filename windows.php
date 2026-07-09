@@ -359,7 +359,7 @@ function windows_print_banner(): void
 {
 	fwrite(STDOUT, "\n");
 	fwrite(STDOUT, "----------------------------------------------- RCMAKER ------------------------------------------------\r\n");
-	fwrite(STDOUT, 'RCMAKER version:' . windows_rcmaker_version() . '          PHP version:' . PHP_VERSION . "\r\n");
+	fwrite(STDOUT, 'Rcmaker version:' . windows_rcmaker_version() . '          PHP version:' . PHP_VERSION . "\r\n");
 	fwrite(STDOUT, 'Workerman version:' . Worker::VERSION . '         Event-Loop:' . windows_workerman_event_loop_name() . "\r\n");
 	fwrite(STDOUT, "----------------------------------------------- WORKERS ------------------------------------------------\r\n");
 	fwrite(STDOUT, "worker                                          listen                              processes   status\r\n");

@@ -4,6 +4,9 @@
 	require_once __DIR__ . '/../vendor/autoload.php';
 
 	use RC\FileOperator;
+	class TokenKeyFileOperator {
+		use FileOperator;
+	}
 	$types = ['RS256','RS384','RS512','ES256','ES384','EDDSA'];
 	$sslDir = ROOT_PATH . '/ssl';
 
@@ -23,7 +26,7 @@
 	};
 
 	$writeKeyPair = function($signer, $privateKey, $publicKey) use ($sslDir, $fail){
-		if(!is_dir($sslDir) && !FileOperator::mkdir($sslDir, 0755, true)){
+		if(!is_dir($sslDir) && !TokenKeyFileOperator::mkdir($sslDir, 0755, true)){
 			$fail('Create ssl directory failed: ' . $sslDir);
 		}
 
@@ -35,10 +38,10 @@
 
 		$privatePath = $sslDir . '/' . $signer . '_' . $rand . '.key';
 		$publicPath = $sslDir . '/' . $signer . '_' . $rand . '.pub';
-		if(FileOperator::write($privatePath, $privateKey, true) === false){
+		if(TokenKeyFileOperator::write($privatePath, $privateKey, true) === false){
 			$fail('Write private key failed: ' . $privatePath);
 		}
-		if(FileOperator::write($publicPath, $publicKey, true) === false){
+		if(TokenKeyFileOperator::write($publicPath, $publicKey, true) === false){
 			@unlink($privatePath);
 			$fail('Write public key failed: ' . $publicPath);
 		}
