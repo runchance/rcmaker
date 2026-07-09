@@ -6,6 +6,8 @@ return [
   'cli_frame' => rcEnv('app.cli_frame','workerman'),
   //CLI模式下是否开启日志[全局]
   'cli_log' => rcEnv('app.cli_log',false) ? true : false,
+  //CLI模式下是否开启rcmaker自定义启动banner[全局]
+  'cli_banner' => rcEnv('app.cli_banner',true) ? true : false,
   //默认时区[全局]
   'default_timezone' => rcEnv('app.default_timezone','Asia/Shanghai'),
   //全局框架统计,启用后 可以用 stopwatch方法获取控制器运行时间 和 内存占用,建议生产环境不要开启[全局+app]

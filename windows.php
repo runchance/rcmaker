@@ -36,6 +36,11 @@ if ($command === 'process' && strtolower((string)($argv[2] ?? '')) === 'start') 
 
 windows_start_master();
 
+function windows_should_print_banner(): bool
+{
+	return Config::get('app', 'cli_banner') !== false;
+}
+
 function windows_start_master(): never
 {
 	$resources = [];
@@ -58,7 +63,9 @@ function windows_start_master(): never
 		exit(0);
 	}
 
-	windows_print_banner();
+	if (windows_should_print_banner()) {
+		windows_print_banner();
+	}
 
 	foreach ($commands as $command) {
 		$commandLine = windows_child_command($command['mode'], $command['name']);
@@ -337,7 +344,9 @@ function windows_restart_resources(array &$resources, array $commands): void
 		proc_close($resource);
 	}
 	$resources = [];
-	windows_print_banner();
+	if (windows_should_print_banner()) {
+		windows_print_banner();
+	}
 	foreach ($commands as $command) {
 		$commandLine = windows_child_command($command['mode'], $command['name']);
 		$resources[$command['name']] = windows_open_process($commandLine);
@@ -351,7 +360,9 @@ function windows_child_command(string $mode, string $name): string
 	if ($mode === 'process') {
 		$command .= ' ' . escapeshellarg($name);
 	}
-	$command .= ' -q';
+	if (windows_should_print_banner()) {
+		$command .= ' -q';
+	}
 	return $command;
 }
 
@@ -374,14 +385,23 @@ function windows_rcmaker_version(): string
 	return defined('VER') ? (string)VER : 'unknown';
 }
 
+function windows_resolve_workerman_event_loop_name(): string
+{
+	if (Worker::$eventLoopClass) {
+		return Worker::$eventLoopClass;
+	}
+	if (extension_loaded('event')) {
+		return '\\Workerman\\Events\\Event';
+	}
+	if (extension_loaded('libevent')) {
+		return '\\Workerman\\Events\\Libevent';
+	}
+	return '\\Workerman\\Events\\Select';
+}
+
 function windows_workerman_event_loop_name(): string
 {
-	try {
-		$method = new ReflectionMethod(Worker::class, 'getEventLoopName');
-		return (string)$method->invoke(null);
-	} catch (Throwable $e) {
-		return '\\Workerman\\Events\\Select';
-	}
+	return windows_resolve_workerman_event_loop_name();
 }
 
 function windows_prepare_runtime(): void
@@ -402,6 +422,7 @@ function windows_prepare_runtime(): void
 
 function windows_setup_worker_logging(array $config): void
 {
+	Worker::$eventLoopClass = windows_resolve_workerman_event_loop_name();
 	Worker::$onMasterReload = function (): void {
 	};
 	Worker::$pidFile = $config['pid_file'];
