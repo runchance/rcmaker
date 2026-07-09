@@ -72,7 +72,31 @@ function encryptphp_absolute_path(string $path): string
 
 function encryptphp_normalize_compare_path(string $path): string
 {
-    return rtrim(str_replace('\\', '/', $path), '/');
+    $path = str_replace('\\', '/', $path);
+    $prefix = '';
+
+    if (preg_match('/^([A-Za-z]:|\/\/[^\/]+\/[^\/]+|\/)/', $path, $match)) {
+        $prefix = $match[1];
+        $path = substr($path, strlen($prefix));
+    }
+
+    $segments = explode('/', $path);
+    $normalized = [];
+    foreach ($segments as $segment) {
+        if ($segment === '' || $segment === '.') {
+            continue;
+        }
+
+        if ($segment === '..') {
+            array_pop($normalized);
+            continue;
+        }
+
+        $normalized[] = $segment;
+    }
+
+    $path = $prefix . ($prefix !== '' && !str_ends_with($prefix, '/') ? '/' : '') . implode('/', $normalized);
+    return rtrim($path, '/');
 }
 
 function encryptphp_assert_supported_php_version(string $version): void
@@ -238,6 +262,8 @@ function encryptphp_should_exclude(string $relativePath, array $excludePaths): b
 
 function encryptphp_copy_tree(string $sourceRoot, string $targetRoot, array $excludePaths): void
 {
+    $sourceRoot = encryptphp_normalize_compare_path(encryptphp_absolute_path($sourceRoot));
+    $targetRoot = encryptphp_normalize_compare_path(encryptphp_absolute_path($targetRoot));
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($sourceRoot, FilesystemIterator::SKIP_DOTS),
         RecursiveIteratorIterator::SELF_FIRST
@@ -511,6 +537,9 @@ function encryptphp_runtime_output(string $outputPath, string $version, string $
     return rtrim($baseDir, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . encryptphp_runtime_name($version);
 }
 
+ $encryptPhpError = null;
+ $workDir = '';
+
 try {
     if (!extension_loaded('openssl')) {
         throw new RuntimeException('The host PHP must have ext-openssl enabled to run this script.');
@@ -525,7 +554,7 @@ try {
     $force = $options['force'];
     $excludePaths = encryptphp_parse_exclude_paths($options['exclude-files']);
     $customIni = encryptphp_resolve_custom_ini($options['custom-ini']);
-    $workDir = ROOT_PATH . '/build/encrypt-php';
+    $workDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . 'rcmaker-encrypt-php';
     encryptphp_mkdir($workDir);
     $encryptBinary = encryptphp_ensure_encrypt_binary($workDir);
 
@@ -541,7 +570,6 @@ try {
 
     if (is_file($inputPath)) {
         encryptphp_run_encrypt_binary($encryptBinary, 'file', $inputPath, $outputPath, $force);
-        echo 'Encrypted file: ' . $inputPath . ' -> ' . $outputPath . PHP_EOL;
     } else {
         if (file_exists($outputPath) && !is_dir($outputPath) && encryptphp_normalize_compare_path(encryptphp_absolute_path($inputPath)) !== encryptphp_normalize_compare_path(encryptphp_absolute_path($outputPath))) {
             throw new RuntimeException('Directory output path already exists as a file: ' . $outputPath);
@@ -561,12 +589,6 @@ try {
         }
 
         $stats = ['encrypted' => 0, 'copied' => 0, 'skipped' => 0];
-        echo sprintf(
-            'Encrypted directory: %s -> %s%s',
-            $inputPath,
-            $outputPath,
-            PHP_EOL
-        );
     }
 
     if ($options['download-runtime']) {
@@ -599,5 +621,13 @@ try {
         echo 'Binary saved to: ' . $buildBinPath . PHP_EOL;
     }
 } catch (Throwable $throwable) {
-    encryptphp_fail($throwable->getMessage());
+    $encryptPhpError = $throwable;
+} finally {
+    if ($workDir !== '' && is_dir($workDir)) {
+        encryptphp_remove_dir($workDir);
+    }
+}
+
+if (isset($encryptPhpError)) {
+    encryptphp_fail($encryptPhpError->getMessage());
 }
