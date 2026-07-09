@@ -197,7 +197,7 @@ function windows_start_process(string $processName): void
 
 	foreach (['count', 'user', 'group', 'reloadable', 'reusePort', 'transport', 'protocol'] as $property) {
 		if (isset($processConfig[$property])) {
-			$processWorker->$property = $processConfig[$property];
+			$processWorker->$property = windows_normalize_worker_property($property, $processConfig[$property]);
 		}
 	}
 
@@ -281,13 +281,39 @@ function static_worker_create(array $config): Worker
 			if ($property === 'count') {
 				$config[$property] = $config[$property] ?? cpu_count();
 			}
-			$worker->$property = $config[$property];
+			$worker->$property = windows_normalize_worker_property($property, $config[$property]);
 		}
 	}
 
 	$worker->reusePort = true;
 
 	return $worker;
+}
+
+function windows_normalize_worker_property(string $property, $value)
+{
+	switch ($property) {
+		case 'count':
+			return max(1, (int)$value);
+		case 'reloadable':
+		case 'reusePort':
+			if (is_bool($value)) {
+				return $value;
+			}
+			if (is_string($value)) {
+				$value = strtolower(trim($value));
+				return !in_array($value, ['', '0', 'false', 'off', 'no'], true);
+			}
+			return (bool)$value;
+		case 'name':
+		case 'user':
+		case 'group':
+		case 'transport':
+		case 'protocol':
+			return (string)$value;
+		default:
+			return $value;
+	}
 }
 
 function windows_open_process(string $command)
