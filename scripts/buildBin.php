@@ -112,6 +112,7 @@ function buildbin_parse_options(array $args): array
 {
     $options = [
         'with-php' => '8.1',
+        'arch' => 'auto',
         'custom-ini' => '',
         'exclude-files' => '',
         'encrypt' => false,
@@ -151,6 +152,44 @@ function buildbin_assert_supported_php_version(string $version): void
             'Unsupported PHP version: ' . $version . '. Supported versions: ' . implode(', ', $supportedVersions)
         );
     }
+}
+
+function buildbin_normalize_arch(string $arch): string
+{
+    $arch = strtolower(trim($arch));
+    if ($arch === '' || $arch === 'auto') {
+        $arch = strtolower((string)php_uname('m'));
+    }
+
+    $map = [
+        'amd64' => 'x86_64',
+        'x64' => 'x86_64',
+        'x86-64' => 'x86_64',
+        'arm64' => 'aarch64',
+        'armv8' => 'aarch64',
+    ];
+    $arch = $map[$arch] ?? $arch;
+
+    if (!in_array($arch, ['x86_64', 'aarch64'], true)) {
+        throw new InvalidArgumentException(
+            'Unsupported architecture: ' . $arch . '. Supported architectures: x86_64, aarch64'
+        );
+    }
+
+    return $arch;
+}
+
+function buildbin_arch_suffix(string $arch): string
+{
+    return $arch === 'aarch64' ? '_aarch64' : '';
+}
+
+function buildbin_sfx_name(string $version, string $arch): string
+{
+    if ($arch === 'aarch64') {
+        return "php$version.micro.aarch64.sfx";
+    }
+    return "php$version.micro.sfx";
 }
 
 function buildbin_download_file(string $host, string $remotePath, string $targetPath, string $label): void
@@ -221,11 +260,12 @@ function buildbin_download_file(string $host, string $remotePath, string $target
     }
 }
 
-function buildbin_ensure_encrypt_binary(string $host): string
+function buildbin_ensure_encrypt_binary(string $host, string $arch): string
 {
-    $encryptBinary = ROOT_PATH . '/build/rcmakerbeast';
-    echo "Downloading rcmakerbeast ...\r\n";
-    buildbin_download_file($host, '/rcmakerbeast', $encryptBinary, 'rcmakerbeast');
+    $encryptBinaryName = 'rcmakerbeast' . buildbin_arch_suffix($arch);
+    $encryptBinary = ROOT_PATH . '/build/' . $encryptBinaryName;
+    echo "Downloading {$encryptBinaryName} ...\r\n";
+    buildbin_download_file($host, '/' . $encryptBinaryName, $encryptBinary, $encryptBinaryName);
 
     chmod($encryptBinary, 0755);
     return $encryptBinary;
@@ -252,7 +292,8 @@ $options = buildbin_parse_options(array_slice($argv, 1));
 buildbin_assert_supported_php_version($options['with-php']);
 
 $version = $options['with-php'];
-$sfxFileName = "php$version.micro.sfx";
+$arch = buildbin_normalize_arch($options['arch']);
+$sfxFileName = buildbin_sfx_name($version, $arch);
 $sfxFile= ROOT_PATH."/build/".$sfxFileName;
 $sfxDownUrl = "rcmaker.runchance.com";
 $customIni = $options['custom-ini'];
@@ -298,7 +339,7 @@ try {
     buildbin_copy_tree(ROOT_PATH, $stagingDir, $exclude_pattern);
     if ($options['encrypt']) {
         echo "Encrypt staged distribution files...\r\n";
-        $encryptBinary = buildbin_ensure_encrypt_binary($sfxDownUrl);
+        $encryptBinary = buildbin_ensure_encrypt_binary($sfxDownUrl, $arch);
         buildbin_encrypt_tree($stagingDir, $encryptBinary);
     }
 

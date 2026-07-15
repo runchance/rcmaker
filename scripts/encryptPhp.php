@@ -19,7 +19,8 @@ Required:
   --output=path              Encrypted output file or directory
 
 Options:
-  --with-php=8.1             Runtime version for micro.sfx / php81-php85 download
+  --with-php=8.1             Runtime version for binary/runtime download
+  --arch=auto                Target architecture: auto, x86_64, aarch64
   --entry=index.php          Entry file relative to output directory when building bin
   --build-bin=app.bin        Build a single executable binary after encryption
   --custom-ini=ini-or-file   Inject runtime ini when building bin
@@ -109,12 +110,43 @@ function encryptphp_assert_supported_php_version(string $version): void
     }
 }
 
+function encryptphp_normalize_arch(string $arch): string
+{
+    $arch = strtolower(trim($arch));
+    if ($arch === '' || $arch === 'auto') {
+        $arch = strtolower((string)php_uname('m'));
+    }
+
+    $map = [
+        'amd64' => 'x86_64',
+        'x64' => 'x86_64',
+        'x86-64' => 'x86_64',
+        'arm64' => 'aarch64',
+        'armv8' => 'aarch64',
+    ];
+    $arch = $map[$arch] ?? $arch;
+
+    if (!in_array($arch, ['x86_64', 'aarch64'], true)) {
+        throw new InvalidArgumentException(
+            'Unsupported architecture: ' . $arch . '. Supported architectures: x86_64, aarch64'
+        );
+    }
+
+    return $arch;
+}
+
+function encryptphp_arch_suffix(string $arch): string
+{
+    return $arch === 'aarch64' ? '_aarch64' : '';
+}
+
 function encryptphp_parse_options(array $args): array
 {
     $options = [
         'input' => '',
         'output' => '',
         'with-php' => '8.1',
+        'arch' => 'auto',
         'entry' => '',
         'build-bin' => '',
         'custom-ini' => '',
@@ -221,13 +253,16 @@ function encryptphp_remove_path(string $path): void
     }
 }
 
-function encryptphp_runtime_name(string $version): string
+function encryptphp_runtime_name(string $version, string $arch = 'x86_64'): string
 {
-    return 'php' . str_replace('.', '', $version);
+    return 'php' . str_replace('.', '', $version) . encryptphp_arch_suffix($arch);
 }
 
-function encryptphp_sfx_name(string $version): string
+function encryptphp_sfx_name(string $version, string $arch = 'x86_64'): string
 {
+    if ($arch === 'aarch64') {
+        return 'php' . $version . '.micro.aarch64.sfx';
+    }
     return 'php' . $version . '.micro.sfx';
 }
 
@@ -375,13 +410,14 @@ function encryptphp_ensure_download(string $host, string $remotePath, string $ta
     return $targetPath;
 }
 
-function encryptphp_ensure_encrypt_binary(string $workDir): string
+function encryptphp_ensure_encrypt_binary(string $workDir, string $arch): string
 {
+    $encryptBinary = ENCRYPTPHP_ENCRYPT_BINARY . encryptphp_arch_suffix($arch);
     return encryptphp_ensure_download(
         ENCRYPTPHP_HOST,
-        '/' . ENCRYPTPHP_ENCRYPT_BINARY,
-        $workDir . DIRECTORY_SEPARATOR . ENCRYPTPHP_ENCRYPT_BINARY,
-        ENCRYPTPHP_ENCRYPT_BINARY
+        '/' . $encryptBinary,
+        $workDir . DIRECTORY_SEPARATOR . $encryptBinary,
+        $encryptBinary
     );
 }
 
@@ -527,14 +563,14 @@ function encryptphp_build_binary(string $sfxFile, string $payloadFile, string $o
     @chmod($outputFile, 0755);
 }
 
-function encryptphp_runtime_output(string $outputPath, string $version, string $runtimeOutput): string
+function encryptphp_runtime_output(string $outputPath, string $version, string $runtimeOutput, string $arch = 'x86_64'): string
 {
     if ($runtimeOutput !== '') {
         return $runtimeOutput;
     }
 
     $baseDir = is_dir($outputPath) ? $outputPath : dirname($outputPath);
-    return rtrim($baseDir, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . encryptphp_runtime_name($version);
+    return rtrim($baseDir, DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . encryptphp_runtime_name($version, $arch);
 }
 
  $encryptPhpError = null;
@@ -547,6 +583,7 @@ try {
 
     $options = encryptphp_parse_options(array_slice($argv, 1));
     encryptphp_assert_supported_php_version($options['with-php']);
+    $arch = encryptphp_normalize_arch($options['arch']);
 
     $inputPath = $options['input'];
     $outputPath = $options['output'];
@@ -556,7 +593,7 @@ try {
     $customIni = encryptphp_resolve_custom_ini($options['custom-ini']);
     $workDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . 'rcmaker-encrypt-php';
     encryptphp_mkdir($workDir);
-    $encryptBinary = encryptphp_ensure_encrypt_binary($workDir);
+    $encryptBinary = encryptphp_ensure_encrypt_binary($workDir, $arch);
 
     if (!file_exists($inputPath)) {
         throw new RuntimeException('Input path does not exist: ' . $inputPath);
@@ -592,23 +629,25 @@ try {
     }
 
     if ($options['download-runtime']) {
-        $runtimeOutput = encryptphp_runtime_output($outputPath, $options['with-php'], $options['runtime-output']);
+        $runtimeOutput = encryptphp_runtime_output($outputPath, $options['with-php'], $options['runtime-output'], $arch);
+        $runtimeName = encryptphp_runtime_name($options['with-php'], $arch);
         encryptphp_ensure_download(
             ENCRYPTPHP_HOST,
-            '/' . encryptphp_runtime_name($options['with-php']),
+            '/' . $runtimeName,
             $runtimeOutput,
-            encryptphp_runtime_name($options['with-php'])
+            $runtimeName
         );
         echo 'Runtime saved to: ' . $runtimeOutput . PHP_EOL;
     }
 
     if ($buildBinPath !== '') {
         $version = $options['with-php'];
+        $sfxName = encryptphp_sfx_name($version, $arch);
         $sfxFile = encryptphp_ensure_download(
             ENCRYPTPHP_HOST,
-            '/' . encryptphp_sfx_name($version),
-            $workDir . DIRECTORY_SEPARATOR . encryptphp_sfx_name($version),
-            encryptphp_sfx_name($version)
+            '/' . $sfxName,
+            $workDir . DIRECTORY_SEPARATOR . $sfxName,
+            $sfxName
         );
 
         $pharPath = $workDir . DIRECTORY_SEPARATOR . pathinfo($buildBinPath, PATHINFO_FILENAME) . '.phar';
