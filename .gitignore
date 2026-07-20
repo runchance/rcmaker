@@ -8,6 +8,7 @@ session_*
 *.log
 *.pid
 .env
+/tests
 test.php
 .user.ini
 php*

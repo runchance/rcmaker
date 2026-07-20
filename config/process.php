@@ -21,6 +21,20 @@ return [
         ],
     ],
 
+    //该进程是独立的APP监听器，它继承了主APP的运行时，并且只覆盖了这里声明的选项。
+    // 该进程可以单独运行，独立于主APP进程，适用于需要独立处理请求的场景。
+    
+    /*
+    'RC_APP_API' => [
+        'type' => 'app',
+        'listen' => 'http://0.0.0.0:8681',
+        'count' => 4,
+        'max_request' => 500000,
+        'memory_limit' => '256M',
+        'reusePort' => true,
+    ],
+    */
+
     //http进程
     
     /*

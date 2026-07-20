@@ -36,7 +36,7 @@ return [
     //statusFile文件路径
     'status_file'             => phar_path() . '/runtime/RC_Workerman_Status.log',
     //最大请求数,超出后会自动杀死进程并重新拉取一个新的进程
-    'max_request'          => 1000000,
+    'max_request'          => max(1, (int)rcEnv('workerman.max_request', 1000000)),
     //输出日志文件路径
     'stdout_file'          => phar_path() . '/runtime/logs/RC_Workerman_Stdout.log',
     //设置最大数据包尺寸，单位为字节

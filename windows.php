@@ -10,7 +10,6 @@ require_once __DIR__ . '/vendor/autoload.php';
 use RC\Config;
 use RC\Container;
 use RC\Controller;
-use RC\Middleware;
 use RC\Stopwatch;
 use RC\Worker as RcmakerWorker;
 use Workerman\Connection\TcpConnection;
@@ -111,44 +110,7 @@ function windows_start_app(): void
 	windows_sync_rcmaker_worker_state('workerman', $worker, $config['max_request'] ?? 1000000);
 	$worker->onWorkerReload = function ($worker): void {
 	};
-	$worker->onWorkerStart = function ($worker) use (&$config): void {
-		Config::get('app', null, true);
-		$config = Config::get('worker', null, true);
-
-		error_reporting(Config::get('app', 'error_types') ?? (E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED));
-		set_error_handler(function ($level, $message, $file = '', $line = 0): void {
-			if (error_reporting(Config::get('app', 'error_types') ?? (E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED)) & $level) {
-				throw new ErrorException($message, 0, $level, $file, $line);
-			}
-		});
-
-		foreach ((Config::get('autoload') ?? []) as $file) {
-			include_once $file;
-		}
-		foreach ((Config::get('bootstrap') ?? []) as $className) {
-			$className::start($worker);
-		}
-
-		if ($timezone = Config::get('app', 'default_timezone')) {
-			date_default_timezone_set($timezone);
-		}
-
-		Middleware::load(Config::get('middleware', null, true) ?? []);
-
-		register_shutdown_function(function ($startTime): void {
-			if (time() - $startTime <= 1) {
-				sleep(1);
-			}
-		}, time());
-
-		if (Config::get('app', 'count') !== true) {
-			Stopwatch::$_framework = null;
-		}
-
-		$worker->onMessage = function ($connection, $request) use ($config): void {
-			RcmakerWorker::onMessage($connection, $request, $config);
-		};
-	};
+	RcmakerWorker::configureWorkermanAppWorker($worker);
 
 	if (windows_should_warmup_static_preload()) {
 		Controller::warmupStaticPreload();
@@ -191,12 +153,38 @@ function windows_start_process(string $processName): void
 		}
 	}
 
-	if (!$processConfig || !isset($processConfig['handler'])) {
+	$isAppProcess = RcmakerWorker::isAppProcessConfig($processConfig);
+	if (!$processConfig || (!$isAppProcess && !isset($processConfig['handler']))) {
 		fwrite(STDERR, "process error: process {$processName} not found or handler missing!\n");
 		exit(1);
 	}
 
 	windows_setup_process_logging($processName);
+	if ($isAppProcess) {
+		$processConfig['name'] = $processConfig['name'] ?? $processName;
+		$runtimeConfig = RcmakerWorker::mergeAppProcessConfig('workerman', $processConfig, true);
+		if (empty($runtimeConfig['listen'])) {
+			fwrite(STDERR, "process error: app process {$processName} listen missing!\n");
+			exit(1);
+		}
+		$processWorker = static_worker_create($runtimeConfig);
+		foreach (['reloadable', 'protocol'] as $property) {
+			if (isset($runtimeConfig[$property])) {
+				$processWorker->$property = windows_normalize_worker_property($property, $runtimeConfig[$property]);
+			}
+		}
+		if (($runtimeConfig['ssl'] ?? false) === true) {
+			$processWorker->transport = 'ssl';
+		}
+		windows_sync_rcmaker_worker_state('workerman', $processWorker, (int)($runtimeConfig['max_request'] ?? 1000000));
+		RcmakerWorker::configureWorkermanAppWorker($processWorker, $processConfig);
+		if (windows_should_warmup_static_preload()) {
+			Controller::warmupStaticPreload();
+		}
+		Stopwatch::$_framework = stopwatch('__frame__');
+		Worker::runAll();
+		return;
+	}
 
 	$processWorker = new Worker($processConfig['listen'] ?? null, $processConfig['context'] ?? []);
 	$processWorker->name = $processName;
@@ -268,7 +256,7 @@ function windows_process_specs(): array
 	}
 
 	$processes = array_filter($processes, static function ($config): bool {
-		return is_array($config) && isset($config['handler']);
+		return is_array($config) && (isset($config['handler']) || RcmakerWorker::isAppProcessConfig($config));
 	});
 
 	return $processes;
