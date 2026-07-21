@@ -1,0 +1,4 @@
+interface:
+  display_name: "rcmaker 快速开发"
+  short_description: "基于 rcmaker 快速设计、开发、优化并交付 PHP 项目"
+  default_prompt: "使用 $rcmaker-development 基于当前需求完成一个可验证的 rcmaker 项目功能。"
