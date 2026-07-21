@@ -111,10 +111,7 @@ function windows_start_app(): void
 	$worker->onWorkerReload = function ($worker): void {
 	};
 	RcmakerWorker::configureWorkermanAppWorker($worker);
-
-	if (windows_should_warmup_static_preload()) {
-		Controller::warmupStaticPreload();
-	}
+	windows_attach_static_preload($worker);
 
 	Stopwatch::$_framework = stopwatch('__frame__');
 	Worker::runAll();
@@ -177,10 +174,8 @@ function windows_start_process(string $processName): void
 			$processWorker->transport = 'ssl';
 		}
 		windows_sync_rcmaker_worker_state('workerman', $processWorker, (int)($runtimeConfig['max_request'] ?? 1000000));
-		RcmakerWorker::configureWorkermanAppWorker($processWorker, $processConfig);
-		if (windows_should_warmup_static_preload()) {
-			Controller::warmupStaticPreload();
-		}
+		RcmakerWorker::configureWorkermanAppWorker($processWorker, $processConfig, $processName);
+		windows_attach_static_preload($processWorker, $processName);
 		Stopwatch::$_framework = stopwatch('__frame__');
 		Worker::runAll();
 		return;
@@ -436,6 +431,20 @@ function windows_should_warmup_static_preload(): bool
 {
 	global $argv;
 	return isset($argv[2]) && strtolower((string)$argv[2]) === 'start';
+}
+
+function windows_attach_static_preload(Worker $worker, ?string $processName = null): void
+{
+	if (!windows_should_warmup_static_preload()) {
+		return;
+	}
+	$onWorkerStart = $worker->onWorkerStart;
+	$worker->onWorkerStart = static function (Worker $worker) use ($onWorkerStart, $processName): void {
+		Controller::warmupStaticPreloadForProcess($processName);
+		if ($onWorkerStart) {
+			$onWorkerStart($worker);
+		}
+	};
 }
 
 function windows_apply_error_types(): void

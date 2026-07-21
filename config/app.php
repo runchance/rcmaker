@@ -48,6 +48,16 @@ return [
     ],
     'api' =>[
       "domains"=>["api.test.com"],
+      //绑定 config/process.php 中 type=app 的进程组；不设置时绑定主 APP 进程组
+      "bind_process"=>"RC_APP_API",
+    ],
+    //纯静态应用可绑定独立 APP 进程；文件未命中时不再执行动态路由
+    'website' => [
+      "bind_process"=>"RC_STATIC",
+      "document_root"=>"website",
+      "enable_static_file"=>true,
+      "enable_static_preload"=>true,
+      "static_only"=>true,
     ],
     //多级应用示例,访问 /api/v2/index/test 可匹配 ./apps/api/v2/controller/index.php
     'api\\v2' => [

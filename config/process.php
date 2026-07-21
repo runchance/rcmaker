@@ -27,8 +27,9 @@ return [
     /*
     'RC_APP_API' => [
         'type' => 'app',
-        'listen' => 'http://0.0.0.0:8681',
+		'listen' => 'http://0.0.0.0:8682',
         'count' => 4,
+		'default_app' => 'api',
         'max_request' => 500000,
         'memory_limit' => '256M',
         'reusePort' => true,
