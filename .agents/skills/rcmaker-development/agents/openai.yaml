@@ -1,4 +1,4 @@
 interface:
   display_name: "rcmaker 快速开发"
   short_description: "基于 rcmaker 快速设计、开发、优化并交付 PHP 项目"
-  default_prompt: "使用 $rcmaker-development 基于当前需求完成一个可验证的 rcmaker 项目功能。"
+  default_prompt: "使用 $rcmaker-development，先读取框架能力目录及任务对应参考，优先使用 rcmaker 现有功能和组件，并结合当前源码完成可验证实现；不要重复实现框架已有能力。"
