@@ -152,9 +152,9 @@ rcmaker 与其他框架对比时固定：PHP 版本、运行引擎、事件循�
 
 ## 二进制或架构错误
 
-- `php85` / `php85_aarch64` 是独立 PHP 可执行文件。
-- `php85.micro.sfx` / `php85.micro.aarch64.sfx` 是构建单文件程序的 micro SFX。
-- `rcmakerbeast` / `rcmakerbeast_aarch64` 是代码保护工具。
+- `php8.5-{platform}-{arch}.zip` 是独立 PHP 运行时包，内含 `php` 或 `php.exe`。
+- `php8.5-micro-{platform}-{arch}.zip` 是单文件构建资源包，内含 `micro.sfx`。
+- `rcmakerbeast-{platform}-{arch}.zip` 是代码保护工具包，内含 `rcmakerbeast` 或 `rcmakerbeast.exe`。
 - x86_64 和 AArch64 不可仅通过改文件名互换。
 
 出现 Exec format error、扩展缺失或打包后路径异常时，检查目标架构、libc、执行权限、依赖扩展、`is_phar()` 和路径助手，不要先改业务逻辑。

@@ -2,10 +2,55 @@
 define('IS_SCRIPT',1);
 define('ROOT_PATH', dirname(__FILE__,2));
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/artifacts.php';
 
 function buildbin_normalize_relative_path(string $path): string
 {
     return '/' . ltrim(str_replace('\\', '/', $path), '/');
+}
+
+function buildbin_parse_exclude_paths(string $value): array
+{
+    if (trim($value) === '') {
+        return [];
+    }
+
+    $paths = [];
+    foreach (explode(',', str_replace('，', ',', $value)) as $path) {
+        $path = trim(str_replace('\\', '/', $path), " \t\n\r\0\x0B/");
+        if ($path === '') {
+            continue;
+        }
+
+        $segments = [];
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+            if ($segment === '..') {
+                throw new InvalidArgumentException('Exclude paths cannot contain ..: ' . $path);
+            }
+            $segments[] = $segment;
+        }
+        if ($segments === []) {
+            throw new InvalidArgumentException('Exclude path must point to a file or directory inside the project.');
+        }
+
+        $paths[] = buildbin_normalize_relative_path(implode('/', $segments));
+    }
+
+    return array_values(array_unique($paths));
+}
+
+function buildbin_should_exclude(string $normalizedPath, array $excludePaths): bool
+{
+    foreach ($excludePaths as $excludePath) {
+        if ($normalizedPath === $excludePath || str_starts_with($normalizedPath, $excludePath . '/')) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function buildbin_mkdir(string $path): void
@@ -15,14 +60,6 @@ function buildbin_mkdir(string $path): void
     }
     if (!mkdir($path, 0777, true) && !is_dir($path)) {
         throw new RuntimeException("Failed to create directory: {$path}");
-    }
-}
-
-function buildbin_write_file(string $path, string $contents): void
-{
-    buildbin_mkdir(dirname($path));
-    if (file_put_contents($path, $contents) === false) {
-        throw new RuntimeException("Failed to write file: {$path}");
     }
 }
 
@@ -39,13 +76,37 @@ function buildbin_remove_dir(string $dir): void
 
     foreach ($iterator as $item) {
         if ($item->isDir()) {
-            rmdir($item->getPathname());
+            buildbin_remove_empty_dir($item->getPathname());
             continue;
         }
-        unlink($item->getPathname());
+        buildbin_remove_file($item->getPathname());
     }
 
-    rmdir($dir);
+    buildbin_remove_empty_dir($dir);
+}
+
+function buildbin_remove_file(string $path): void
+{
+    for ($attempt = 0; $attempt < 20; $attempt++) {
+        if (!file_exists($path) || @unlink($path)) {
+            return;
+        }
+        usleep(100000);
+    }
+
+    throw new RuntimeException('Failed to remove file after retries: ' . $path);
+}
+
+function buildbin_remove_empty_dir(string $path): void
+{
+    for ($attempt = 0; $attempt < 20; $attempt++) {
+        if (!is_dir($path) || @rmdir($path)) {
+            return;
+        }
+        usleep(100000);
+    }
+
+    throw new RuntimeException('Failed to remove directory after retries: ' . $path);
 }
 
 function buildbin_remove_path(string $path): void
@@ -55,7 +116,7 @@ function buildbin_remove_path(string $path): void
         return;
     }
     if (is_file($path)) {
-        unlink($path);
+        buildbin_remove_file($path);
     }
 }
 
@@ -79,7 +140,12 @@ function buildbin_cleanup_build_dir(string $buildDir, string $keepFileName): voi
     }
 }
 
-function buildbin_copy_tree(string $sourceRoot, string $targetRoot, string $excludePattern): void
+function buildbin_copy_tree(
+    string $sourceRoot,
+    string $targetRoot,
+    string $excludePattern,
+    array $excludePaths
+): void
 {
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($sourceRoot, FilesystemIterator::SKIP_DOTS),
@@ -91,7 +157,9 @@ function buildbin_copy_tree(string $sourceRoot, string $targetRoot, string $excl
         $relativePath = substr($sourcePath, strlen($sourceRoot) + 1);
         $normalizedPath = buildbin_normalize_relative_path($relativePath);
 
-        if (!preg_match($excludePattern, $normalizedPath)) {
+        if (!preg_match($excludePattern, $normalizedPath)
+            || buildbin_should_exclude($normalizedPath, $excludePaths)
+        ) {
             continue;
         }
 
@@ -108,10 +176,40 @@ function buildbin_copy_tree(string $sourceRoot, string $targetRoot, string $excl
     }
 }
 
+function buildbin_copy_file_to_stream(string $sourcePath, $targetStream): void
+{
+    $source = fopen($sourcePath, 'rb');
+    if (!is_resource($source)) {
+        throw new RuntimeException('Failed to open build input: ' . $sourcePath);
+    }
+
+    try {
+        if (stream_copy_to_stream($source, $targetStream) === false) {
+            throw new RuntimeException('Failed to append build input: ' . $sourcePath);
+        }
+    } finally {
+        fclose($source);
+    }
+}
+
+function buildbin_write_to_stream($stream, string $contents): void
+{
+    $length = strlen($contents);
+    $offset = 0;
+    while ($offset < $length) {
+        $written = fwrite($stream, substr($contents, $offset));
+        if ($written === false || $written === 0) {
+            throw new RuntimeException('Failed to write binary output.');
+        }
+        $offset += $written;
+    }
+}
+
 function buildbin_parse_options(array $args): array
 {
     $options = [
-        'with-php' => '8.1',
+        'with-php' => '8.4',
+        'platform' => 'auto',
         'arch' => 'auto',
         'custom-ini' => '',
         'exclude-files' => '',
@@ -144,131 +242,16 @@ function buildbin_parse_options(array $args): array
     return $options;
 }
 
-function buildbin_assert_supported_php_version(string $version): void
+function buildbin_ensure_encrypt_binary(string $platform, string $arch): string
 {
-    $supportedVersions = ['8.1', '8.2', '8.3', '8.4', '8.5'];
-    if (!in_array($version, $supportedVersions, true)) {
-        throw new InvalidArgumentException(
-            'Unsupported PHP version: ' . $version . '. Supported versions: ' . implode(', ', $supportedVersions)
-        );
-    }
-}
-
-function buildbin_normalize_arch(string $arch): string
-{
-    $arch = strtolower(trim($arch));
-    if ($arch === '' || $arch === 'auto') {
-        $arch = strtolower((string)php_uname('m'));
-    }
-
-    $map = [
-        'amd64' => 'x86_64',
-        'x64' => 'x86_64',
-        'x86-64' => 'x86_64',
-        'arm64' => 'aarch64',
-        'armv8' => 'aarch64',
-    ];
-    $arch = $map[$arch] ?? $arch;
-
-    if (!in_array($arch, ['x86_64', 'aarch64'], true)) {
-        throw new InvalidArgumentException(
-            'Unsupported architecture: ' . $arch . '. Supported architectures: x86_64, aarch64'
-        );
-    }
-
-    return $arch;
-}
-
-function buildbin_arch_suffix(string $arch): string
-{
-    return $arch === 'aarch64' ? '_aarch64' : '';
-}
-
-function buildbin_sfx_name(string $version, string $arch): string
-{
-    if ($arch === 'aarch64') {
-        return "php$version.micro.aarch64.sfx";
-    }
-    return "php$version.micro.sfx";
-}
-
-function buildbin_download_file(string $host, string $remotePath, string $targetPath, string $label): void
-{
-    $client = @stream_socket_client("tcp://{$host}:80", $errno, $errstr);
-    if (!is_resource($client)) {
-        throw new RuntimeException("Connect {$label} download server failed: {$errstr} ({$errno})");
-    }
-
-    fwrite($client, "GET {$remotePath} HTTP/1.1\r\nAccept: */*\r\nHost: {$host}\r\nUser-Agent: rcmaker/script\r\nConnection: close\r\n\r\n");
-
-    $bodyLength = 0;
-    $bodyBuffer = '';
-    $headerBuffer = '';
-    $lastPercent = -1;
-    while (true) {
-        $buffer = fread($client, 65535);
-        if ($buffer !== false && $buffer !== '') {
-            if ($bodyLength === 0) {
-                $headerBuffer .= $buffer;
-                $headerEndPos = strpos($headerBuffer, "\r\n\r\n");
-                if ($headerEndPos === false) {
-                    if (!is_resource($client) || feof($client)) {
-                        break;
-                    }
-                    continue;
-                }
-
-                $header = substr($headerBuffer, 0, $headerEndPos + 4);
-                if (!preg_match('/HTTP\/1\.[01] 200 /', $header)) {
-                    throw new RuntimeException("Download {$label} failed.");
-                }
-                if (!preg_match('/Content-Length: (\d+)\r\n/i', $header, $match)) {
-                    throw new RuntimeException("Download {$label} failed.");
-                }
-
-                $bodyLength = (int)$match[1];
-                $bodyBuffer = substr($headerBuffer, $headerEndPos + 4);
-            } else {
-                $bodyBuffer .= $buffer;
-            }
-        }
-
-        if ($bodyLength > 0) {
-            $receiveLength = strlen($bodyBuffer);
-            $percent = min(100, (int)ceil($receiveLength * 100 / $bodyLength));
-            if ($percent !== $lastPercent) {
-                echo '[' . str_pad('', $percent, '=') . '>' . str_pad('', 100 - $percent) . "{$percent}%]";
-                echo $percent < 100 ? "\r" : "\n";
-                $lastPercent = $percent;
-            }
-
-            if ($receiveLength >= $bodyLength) {
-                buildbin_write_file($targetPath, $bodyBuffer);
-                break;
-            }
-        }
-
-        if ($buffer === false || !is_resource($client) || feof($client)) {
-            break;
-        }
-    }
-
-    fclose($client);
-
-    if (!is_file($targetPath)) {
-        throw new RuntimeException("Download {$label} failed.");
-    }
-}
-
-function buildbin_ensure_encrypt_binary(string $host, string $arch): string
-{
-    $encryptBinaryName = 'rcmakerbeast' . buildbin_arch_suffix($arch);
+    $encryptBinaryName = 'rcmakerbeast-' . $platform . '-' . $arch
+        . ($platform === 'windows' ? '.exe' : '');
     $encryptBinary = ROOT_PATH . '/build/' . $encryptBinaryName;
-    echo "Downloading {$encryptBinaryName} ...\r\n";
-    buildbin_download_file($host, '/' . $encryptBinaryName, $encryptBinary, $encryptBinaryName);
-
-    chmod($encryptBinary, 0755);
-    return $encryptBinary;
+    return rcartifact_ensure(
+        rcartifact_beast_archive($platform, $arch),
+        rcartifact_beast_entry($platform),
+        $encryptBinary
+    );
 }
 
 function buildbin_encrypt_tree(string $sourceRoot, string $encryptBinary): void
@@ -286,16 +269,18 @@ function buildbin_encrypt_tree(string $sourceRoot, string $encryptBinary): void
 
 $pharFileName = "rcmaker.phar";
 $phar_file = ROOT_PATH.'/build/'.$pharFileName;
-$binFileName  = "rcmaker.bin";
-$binFile = ROOT_PATH.'/build/'.$binFileName;
 $options = buildbin_parse_options(array_slice($argv, 1));
-buildbin_assert_supported_php_version($options['with-php']);
+rcartifact_assert_php_version($options['with-php']);
 
 $version = $options['with-php'];
-$arch = buildbin_normalize_arch($options['arch']);
-$sfxFileName = buildbin_sfx_name($version, $arch);
-$sfxFile= ROOT_PATH."/build/".$sfxFileName;
-$sfxDownUrl = "rcmaker.runchance.com";
+$platform = rcartifact_normalize_platform($options['platform']);
+$arch = rcartifact_normalize_arch($options['arch']);
+rcartifact_assert_target($platform, $arch);
+$binFileName = $platform === 'windows' ? 'rcmaker.exe' : 'rcmaker.bin';
+$binFile = ROOT_PATH . '/build/' . $binFileName;
+$sfxArchive = rcartifact_micro_archive($version, $platform, $arch);
+$sfxFile = ROOT_PATH . '/build/' . substr($sfxArchive, 0, -4) . '.sfx';
+$entryFile = $platform === 'windows' ? 'windows.php' : 'index.php';
 $customIni = $options['custom-ini'];
 if($customIni){
     if(strpos($customIni,".ini") !== false){
@@ -312,34 +297,32 @@ if($customIni){
         $customIni = str_replace(";","\n",$customIni);
     }
 }
-$customIniHeaderFile = ROOT_PATH."/scripts/custominiheader.bin";
-$exclude_pattern = "#^(?!.*(composer.json|/.github/|/.idea/|/.git/|/.setting/|/runtime/|/vendor-bin/|/build/|/scripts/))(.*)$#";
+$exclude_pattern = "#^(?!.*(composer.json|/.github/|/.idea/|/.git/|/.setting/|/runtime/|/vendor-bin/|/build/|/scripts/|/official/download/))(.*)$#";
 $signature_algorithm = Phar::SHA256;
-$exclude_files = [];
-if ($options['exclude-files'] !== '') {
-    $exclude_files = explode(",", str_replace("，", ",", $options['exclude-files']));
-}
+$excludePaths = buildbin_parse_exclude_paths($options['exclude-files']);
 $stagingDir = ROOT_PATH . '/build/rcmaker-phar-src';
 buildbin_mkdir(ROOT_PATH.'/build/');
 
-if (file_exists($binFile)) {
-    unlink($binFile);
-}
+buildbin_remove_path($binFile);
 
 
 ##生成Phar
 ###########################################################################################################
-if (file_exists($phar_file)) {
-    unlink($phar_file);
-}
+buildbin_remove_path($phar_file);
 
 buildbin_remove_dir($stagingDir);
 try {
     buildbin_mkdir($stagingDir);
-    buildbin_copy_tree(ROOT_PATH, $stagingDir, $exclude_pattern);
+    buildbin_copy_tree(ROOT_PATH, $stagingDir, $exclude_pattern, $excludePaths);
+    if (!is_file($stagingDir . DIRECTORY_SEPARATOR . $entryFile)) {
+        throw new RuntimeException(
+            "Build entry {$entryFile} is missing or excluded for target {$platform}/{$arch}."
+        );
+    }
     if ($options['encrypt']) {
+        rcartifact_assert_host_target($platform, $arch, 'Encrypted build');
         echo "Encrypt staged distribution files...\r\n";
-        $encryptBinary = buildbin_ensure_encrypt_binary($sfxDownUrl, $arch);
+        $encryptBinary = buildbin_ensure_encrypt_binary($platform, $arch);
         buildbin_encrypt_tree($stagingDir, $encryptBinary);
     }
 
@@ -376,22 +359,15 @@ if ($signature_algorithm === Phar::OPENSSL) {
 }
 $phar->buildFromDirectory($stagingDir);
 
-
-foreach ($exclude_files as $file) {
-    if($phar->offsetExists($file)){
-        $phar->delete($file);
-    }
-}
-
 echo "Files collect complete, begin add file to Phar.\r\n";
 
-$phar->setStub("#!/usr/bin/env php
-<?php
-define('IN_PHAR', true);
-Phar::mapPhar('rcmaker');
-require 'phar://rcmaker/index.php';
-__HALT_COMPILER();
-");
+$stub = "#!/usr/bin/env php\n"
+    . "<?php\n"
+    . "define('IN_PHAR', true);\n"
+    . "Phar::mapPhar('rcmaker');\n"
+    . "require 'phar://rcmaker/{$entryFile}';\n"
+    . "__HALT_COMPILER();\n";
+$phar->setStub($stub);
 $phar->stopBuffering();
 unset($phar);
 } finally {
@@ -402,35 +378,35 @@ echo "Generate Phar file successfully.\r\n";
 ##生成Bin
 ###########################################################################################################
 
-if (!is_file($sfxFile)) {
-	echo "Downloading PHP$version ...\r\n";
-	buildbin_download_file($sfxDownUrl, "/$sfxFileName", $sfxFile, "PHP$version");
-}else{
-	echo "Use PHP$version ...\r\n";
-}
+rcartifact_ensure($sfxArchive, 'micro.sfx', $sfxFile);
 // 生成二进制文件
+$temporaryBin = $binFile . '.tmp';
+$output = fopen($temporaryBin, 'wb');
+if (!is_resource($output)) {
+    throw new RuntimeException('Failed to create binary output: ' . $temporaryBin);
+}
 
-$sfxContents = file_get_contents($sfxFile);
-if ($sfxContents === false) {
-    throw new RuntimeException("Failed to read SFX file: {$sfxFile}");
-}
-buildbin_write_file($binFile, $sfxContents);
- // 自定义INI
-if (!empty($customIni)) {
-    if (file_exists($customIniHeaderFile)) {
-        unlink($customIniHeaderFile);
+try {
+    buildbin_copy_file_to_stream($sfxFile, $output);
+    if ($customIni !== '') {
+        buildbin_write_to_stream($output, "\xfd\xf6\x69\xe6" . pack('N', strlen($customIni)) . $customIni);
     }
-    $f = fopen($customIniHeaderFile, 'wb');
-    fwrite($f, "\xfd\xf6\x69\xe6");
-    fwrite($f, pack('N', strlen($customIni)));
-    fwrite($f, $customIni);
-    fclose($f);
-    file_put_contents($binFile, file_get_contents($customIniHeaderFile),FILE_APPEND);
-    unlink($customIniHeaderFile);
+    buildbin_copy_file_to_stream($phar_file, $output);
+} catch (Throwable $throwable) {
+    fclose($output);
+    @unlink($temporaryBin);
+    throw $throwable;
 }
-file_put_contents($binFile, file_get_contents($phar_file), FILE_APPEND);
+fclose($output);
+
+if (!rename($temporaryBin, $binFile)) {
+    @unlink($temporaryBin);
+    throw new RuntimeException('Failed to finalize binary output: ' . $binFile);
+}
  // 添加执行权限
-chmod($binFile, 0755);
+if ($platform !== 'windows') {
+    @chmod($binFile, 0755);
+}
 buildbin_cleanup_build_dir(ROOT_PATH.'/build/', $binFileName);
 echo "\r\nSaved $binFileName to $binFile\r\nBuild Success!\r\n";
 ?>

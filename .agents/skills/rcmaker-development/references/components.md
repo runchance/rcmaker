@@ -141,7 +141,7 @@ try {
 }
 ```
 
-刷新使用 `reSet()`；不同 guard 使用 `$req->token('admin')`。Token 来源、算法、证书、刷新和单设备登录见 `official/doc/md/module/token.md` 与 `official/doc/md/scripts/tokenKey.md`。不要自行实现 JWT 签发、刷新和互斥登录状态。
+刷新使用 `reSet()`；不同 guard 使用 `$req->token('admin')`。Token 来源、算法、证书、刷新和单设备登录见 `official/doc/md/module/token.md`；签名密钥优先通过 `php index.php interact` 的菜单 4 生成。`official/doc/md/scripts/tokenKey.md` 只用于传统兼容流程。不要自行实现 JWT 签发、刷新和互斥登录状态。
 
 ## Captcha 与 SMS
 

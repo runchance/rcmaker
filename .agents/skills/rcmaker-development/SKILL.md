@@ -11,7 +11,7 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 
 1. **先查框架，再写代码。** 实现请求、响应、数据库、验证、CRUD、缓存、会话、鉴权、队列、分页、HTTP 客户端、文件或文档功能前，必须先确认 rcmaker 是否已有能力。
 2. **框架能力优先。** rcmaker 已提供合适能力时必须使用；不能因为更熟悉原生 PHP、PDO 或其他框架而重复实现。
-3. **源码是运行事实。** 先看当前项目用法和 `official/doc/md/`，接口仍不明确时查看 `vendor/runchance/rcmaker-framework/src/`。不要猜方法名或参数。
+3. **源码是运行事实。** 先看当前项目用法和 `official/doc/md/`,如果不存在文档则访问在线文档 `https://rcmaker.runchance.com/doc/`，接口仍不明确时查看 `vendor/runchance/rcmaker-framework/src/`。不要猜方法名或参数。
 4. **第三方包是补充。** 只有框架没有对应能力、现有能力明显不适合需求，或用户明确指定时，才引入 Composer 包。先检查 `composer.json` 和现有依赖。
 5. **不得静默绕过。** 若决定不使用已有能力，实施前必须说明不适用原因、替代方案及常驻进程风险。
 

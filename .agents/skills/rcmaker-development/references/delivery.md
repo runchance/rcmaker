@@ -1,36 +1,46 @@
 # Delivery And Source Protection
 
-rcmaker V3 is the current development line in this repository. Use `official/doc/V2/` only for legacy V2 projects and do not silently mix V2 configuration or APIs into V3 work.
+rcmaker V3 is the current development line in this repository. Use `official/doc/v2/` only for legacy V2 projects and do not silently mix V2 configuration or APIs into V3 work.
 
 ## Distinguish The Artifacts
 
-| Purpose | x86_64 example | AArch64 example |
+| Purpose | Linux x86_64 example | Linux AArch64 example |
 | --- | --- | --- |
-| Standalone PHP runtime | `php85` | `php85_aarch64` |
-| micro SFX stub used to build one executable | `php85.micro.sfx` | `php85.micro.aarch64.sfx` |
-| Source-protection tool | `rcmakerbeast` | `rcmakerbeast_aarch64` |
+| Standalone PHP runtime archive | `php8.5-linux-x86_64.zip` | `php8.5-linux-aarch64.zip` |
+| Micro SFX archive used to build one executable | `php8.5-micro-linux-x86_64.zip` | `php8.5-micro-linux-aarch64.zip` |
+| Source-protection tool archive | `rcmakerbeast-linux-x86_64.zip` | `rcmakerbeast-linux-aarch64.zip` |
 
-`php85_aarch64` is an executable PHP runtime, not a micro SFX file. Never substitute it for `php85.micro.aarch64.sfx` in packaging logic.
+Every archive contains exactly one file. Runtime archives contain `php` or `php.exe`, Micro archives contain `micro.sfx`, and protection-tool archives contain `rcmakerbeast` or `rcmakerbeast.exe`. Never substitute the standalone runtime for `micro.sfx` in packaging logic.
+
+The filename grammar is `php{version}-{platform}-{arch}.zip`, `php{version}-micro-{platform}-{arch}.zip`, and `rcmakerbeast-{platform}-{arch}.zip`. Supported targets are Linux x86_64/AArch64, macOS x86_64/AArch64, and Windows x86_64. Artifacts are downloaded from `https://rcmaker.runchance.com/download/`. The single-file Composer bootstrap is downloaded directly from `https://rcmaker.runchance.com/download/composer`; it is not a ZIP artifact and does not use platform or architecture suffixes.
 
 Prefer installing the selected executable tools under `/usr/local/bin` on Linux and invoking their stable command names. Confirm execute permissions and architecture with system tools before debugging the application.
 
 ## Build A Standalone Application
 
-From the project root, with the required runtime and SFX assets available:
+For guided local operations, prefer the framework-native interactive console:
 
 ```bash
-php -d phar.readonly=0 ./scripts/buildBin.php --with-php=8.5 --arch=auto
+php index.php interact
+```
+
+The interactive implementation lives under `RC\Cli` and directly performs artifact download, binary construction, source protection, systemd management, and token-key generation. It must not include, require, spawn, or otherwise depend on `scripts/*.php`. Treat `interact` as the maintained default for local delivery work and user-facing instructions. When building for Windows, the framework builder must inject its framework-owned entry and must not read or copy the project-root `windows.php`; older projects may update only the Composer framework package.
+
+Do not recommend `scripts/*.php` for new projects or new automation. Those files are compatibility fallbacks and may be removed at any time. Only when the user explicitly needs an existing unattended workflow that has not migrated may you document the legacy command, clearly labeled as temporary fallback behavior:
+
+```bash
+php -d phar.readonly=0 ./scripts/buildBin.php --with-php=8.5 --platform=auto --arch=auto
 ```
 
 Build with source protection when required:
 
 ```bash
-php -d phar.readonly=0 ./scripts/buildBin.php --with-php=8.5 --arch=auto --encrypt
+php -d phar.readonly=0 ./scripts/buildBin.php --with-php=8.5 --platform=auto --arch=auto --encrypt
 ```
 
-Use an explicit architecture when CI is cross-building or auto-detection is inappropriate. Read `scripts/buildBin.php` before changing options; its current implementation is authoritative.
+Encryption executes a target-specific protection tool and therefore requires the build host to match the target platform and architecture. For current behavior, inspect `RC\Cli\Interactive` and its command classes. Inspect `scripts/` only for an explicitly requested legacy fallback; do not use those files as the source of truth for the framework-native workflow.
 
-The expected deliverable is typically `build/rcmaker.bin`. Keep `.env` beside the binary when the project reads external deployment configuration that way. Do not embed production credentials into the package.
+The expected deliverable is `build/rcmaker.bin` on Linux/macOS and `build/rcmaker.exe` on Windows. Keep `.env` beside the binary when the project reads external deployment configuration that way. Do not embed production credentials into the package.
 
 ## Packaged Runtime Behavior
 
@@ -43,7 +53,7 @@ The expected deliverable is typically `build/rcmaker.bin`. Keep `.env` beside th
 
 ## Protect General PHP Scripts
 
-Use the documented `encryptPhp`/rcmakerbeast workflow for independent PHP scripts that are not packaged as the main rcmaker application. Select `rcmakerbeast_aarch64` for AArch64 targets. Verify that protected output executes with the target runtime before deleting or archiving source inputs.
+Use option 2 in `php index.php interact` for independent PHP files or directories that are not packaged as the main rcmaker application. Let `RC\Cli\EncryptPhp` select `rcmakerbeast-{platform}-{arch}.zip`; do not construct legacy suffix-based names. Verify that protected output executes with the target runtime before deleting or archiving source inputs. The old `scripts/encryptPhp.php` entry is a compatibility fallback that may be removed at any time, not the recommended workflow.
 
 Source protection raises reverse-engineering cost. It does not protect runtime secrets, database credentials, API tokens, decrypted in-memory values, or insecure application behavior.
 
@@ -58,4 +68,4 @@ Source protection raises reverse-engineering cost. It does not protect runtime s
 - Health, shutdown, logs and restart behavior are verified.
 - A clean-host smoke test covers one dynamic route, one static asset, storage access and required external services.
 
-See `official/doc/md/install.md`, `official/doc/md/scripts/buildBin.md`, and `official/doc/md/scripts/encryptPhp.md` for the project-facing commands and download locations.
+Read `official/doc/md/interact.md` first, followed by `official/doc/md/download.md` and `official/doc/md/install.md`. Read documents under `official/doc/md/scripts/` only when maintaining an explicitly requested legacy fallback.

@@ -1,12 +1,13 @@
 # 官方文档导航
 
-当前 V3 文档位于 `official/doc/md/`。遇到不熟悉的能力时，从本页选择原文，再与当前源码核对。V2 项目只使用 `official/doc/V2/`，不要混用 V3 配置和 API。
+当前 V3 文档位于 `official/doc/md/`。遇到不熟悉的能力时，从本页选择原文，再与当前源码核对。V2 项目只使用 `official/doc/v2/`，不要混用 V3 配置和 API。
 
 ## 入门与总体结构
 
 | 文档 | 何时读取 |
 | --- | --- |
-| `official/doc/md/install.md` | 安装、Linux/Windows、x86_64/AArch64 运行时 |
+| `official/doc/md/install.md` | Linux、macOS、Windows 安装与启动 |
+| `official/doc/md/download.md` | 独立 PHP、Micro SFX、源码保护工具的版本与平台矩阵 |
 | `official/doc/md/directory.md` | 目录职责和项目结构 |
 | `official/doc/md/demo.md` | 最小控制器、JSON/XML/JSONP/视图示例 |
 | `official/doc/md/Helper.md` | 全局助手、简写函数和 Request 映射 |
@@ -86,14 +87,15 @@
 
 普通 HTTP 进程只有其 handler 能力；需要完整应用路由、中间件、Session、异常和静态能力时使用 `type=app`。
 
-## 脚本、打包与运维
+## 项目工具、打包与运维
 
 | 文档 | 何时读取 |
 | --- | --- |
-| `official/doc/md/scripts/buildBin.md` | rcmaker 单文件二进制、架构和加密 |
-| `official/doc/md/scripts/encryptPhp.md` | 通用 PHP 源码加密和独立脚本打包 |
-| `official/doc/md/scripts/systemd.md` | PHP/二进制注册 Linux 服务 |
-| `official/doc/md/scripts/tokenKey.md` | Token 算法证书生成 |
+| `official/doc/md/interact.md` | 必须优先读取；框架原生构建、加密、systemd 服务和签名密钥操作 |
+| `official/doc/md/scripts/buildBin.md` | 仅维护随时可能删除的传统二进制兼容脚本时读取 |
+| `official/doc/md/scripts/encryptPhp.md` | 仅维护随时可能删除的传统加密兼容脚本时读取 |
+| `official/doc/md/scripts/systemd.md` | 仅维护随时可能删除的传统 systemd 兼容脚本时读取 |
+| `official/doc/md/scripts/tokenKey.md` | 仅维护随时可能删除的传统密钥兼容脚本时读取 |
 
 ## 阅读规则
 

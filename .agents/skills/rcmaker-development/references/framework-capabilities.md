@@ -35,7 +35,7 @@
 | 混合运行 | Web 入口 + CLI 服务 | `mix.md` |
 | SSL/HTTPS | Worker/Swoole/进程 context | `ssl.md` |
 | 静态资源 | `public/`, 应用 `document_root` | `static.md`, `static-directory.md` |
-| 打包加密 | `scripts/` | `scripts/buildBin.md`, `scripts/encryptPhp.md` |
+| 打包、加密与交付 | `RC\Cli`, `php index.php interact` | `interact.md`；`scripts/` 文档仅为随时可能删除的兼容备选 |
 
 以上省略了共同前缀 `official/doc/md/`。
 

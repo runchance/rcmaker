@@ -4,7 +4,11 @@ declare(strict_types=1);
 define('IS_SCRIPT', 1);
 define('ROOT_PATH', dirname(__FILE__));
 
-chdir(__DIR__);
+if (PHP_SAPI === 'micro') {
+	chdir(dirname(windows_executable_path()));
+} else {
+	chdir(__DIR__);
+}
 require_once __DIR__ . '/vendor/autoload.php';
 
 use RC\Config;
@@ -16,7 +20,7 @@ use Workerman\Connection\TcpConnection;
 use Workerman\Timer;
 use Workerman\Worker;
 
-if (PHP_SAPI !== 'cli') {
+if (!in_array(PHP_SAPI, ['cli', 'micro'], true)) {
 	fwrite(STDERR, "This script must run in CLI mode.\n");
 	exit(1);
 }
@@ -339,7 +343,11 @@ function windows_restart_resources(array &$resources, array $commands): void
 
 function windows_child_command(string $mode, string $name): string
 {
-	$command = '"' . PHP_BINARY . '" "' . __FILE__ . '" ' . $mode . ' start';
+	if (PHP_SAPI === 'micro') {
+		$command = '"' . windows_executable_path() . '" ' . $mode . ' start';
+	} else {
+		$command = '"' . PHP_BINARY . '" "' . __FILE__ . '" ' . $mode . ' start';
+	}
 	if ($mode === 'process') {
 		$command .= ' ' . escapeshellarg($name);
 	}
@@ -347,6 +355,36 @@ function windows_child_command(string $mode, string $name): string
 		$command .= ' -q';
 	}
 	return $command;
+}
+
+function windows_executable_path(): string
+{
+	static $path = null;
+	if ($path !== null) {
+		return $path;
+	}
+
+	if (PHP_SAPI === 'micro') {
+		$candidates = [
+			class_exists(Phar::class, false) ? Phar::running(false) : '',
+			$GLOBALS['argv'][0] ?? '',
+			$_SERVER['SCRIPT_FILENAME'] ?? '',
+		];
+	} else {
+		$candidates = [PHP_BINARY];
+	}
+
+	foreach ($candidates as $candidate) {
+		if (!is_string($candidate) || $candidate === '') {
+			continue;
+		}
+		$resolved = realpath($candidate);
+		if ($resolved !== false && is_file($resolved)) {
+			return $path = $resolved;
+		}
+	}
+
+	throw new RuntimeException('Unable to resolve the current PHP executable path.');
 }
 
 function windows_print_banner(): void
@@ -397,8 +435,8 @@ function windows_prepare_runtime(): void
 	];
 
 	foreach ($paths as $path) {
-		if (!is_dir($path)) {
-			mkdir($path, 0777, true);
+		if (!is_dir($path) && !@mkdir($path, 0777, true) && !is_dir($path)) {
+			throw new RuntimeException("Unable to create runtime directory: {$path}");
 		}
 	}
 }

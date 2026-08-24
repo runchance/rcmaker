@@ -27,12 +27,22 @@ rcmaker 是一个面向快速交付的 PHP 常驻内存应用框架。它保留�
 
 | 目标 | 文档 |
 | --- | --- |
-| 安装运行环境并启动项目 | [安装与启动](doc/md/install.md) |
-| 了解项目目录和入口文件 | [目录结构](doc/md/directory.md) |
-| 编写接口和页面控制器 | [控制器](doc/md/controller.md) / [路由](doc/md/route.md) |
-| 使用请求、响应、模板能力 | [请求对象](doc/md/request.md) / [响应对象](doc/md/response.md) / [视图与模板](doc/md/view.md) |
-| 配置应用独立进程组 | [应用进程组](doc/md/app-process.md) |
-| 打包、加密和注册服务 | [二进制打包](doc/md/scripts/buildBin.md) / [PHP 加密与打包](doc/md/scripts/encryptPhp.md) / [Linux 服务注册](doc/md/scripts/systemd.md) |
+| 安装运行环境并启动项目 | [安装与启动](https://rcmaker.runchance.com/doc/#/md/install) |
+| 下载独立 PHP、Composer 与构建资源 | [独立运行时与构建资源](https://rcmaker.runchance.com/doc/#/md/download) |
+| 构建、加密、注册服务和生成签名密钥（推荐） | [交互式项目工具](https://rcmaker.runchance.com/doc/#/md/interact) |
+| 了解项目目录和入口文件 | [目录结构](https://rcmaker.runchance.com/doc/#/md/directory) |
+| 编写接口和页面控制器 | [控制器](https://rcmaker.runchance.com/doc/#/md/controller) / [路由](https://rcmaker.runchance.com/doc/#/md/route) |
+| 使用请求、响应、模板能力 | [请求对象](https://rcmaker.runchance.com/doc/#/md/request) / [响应对象](https://rcmaker.runchance.com/doc/#/md/response) / [视图与模板](https://rcmaker.runchance.com/doc/#/md/view) |
+| 配置应用独立进程组 | [应用进程组](https://rcmaker.runchance.com/doc/#/md/app-process) |
+| 传统参数脚本（兼容备选，随时可能删除） | [备选脚本说明](https://rcmaker.runchance.com/doc/#/md/scripts/buildBin) |
+
+在项目根目录运行交互式工具，无需记忆脚本参数：
+
+```shell
+php index.php interact
+```
+
+> `interact` 是当前推荐且持续维护的操作入口。`scripts/*.php` 仅用于兼容旧流程或暂未迁移的自动化任务，随时可能删除，新项目不应依赖这些传统脚本。
 
 ## 适合场景
 
@@ -51,7 +61,7 @@ rcmaker 是一个面向快速交付的 PHP 常驻内存应用框架。它保留�
 - 延续 PHP 的开发效率和 Composer 生态，无需更换技术栈
 - 可将 PHP 运行环境、项目代码和依赖封装为独立可执行程序
 - 目标服务器无需单独安装和配置 PHP，降低部署与环境维护成本
-- 支持 x86_64 与 AArch64 环境，便于在服务器和 ARM 设备上交付
+- 独立运行时和单文件程序覆盖 Linux、macOS 与 Windows，支持 x86_64，并在 Linux、macOS 支持 AArch64
 
 ### 2. 多应用与进程组隔离
 
