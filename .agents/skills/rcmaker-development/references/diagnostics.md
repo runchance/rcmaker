@@ -114,8 +114,9 @@ curl -i -H 'Host: api.example.com' http://127.0.0.1:8081/path
 
 ## 数据库或组件不可用
 
-### `DB()` / `SDB()` 报支持类未加载
+### AutoForm / SDB / DB 报支持类未加载
 
+- 先确认调用符合 AutoForm -> SDB -> 复杂 SQL 才 DB 的层级；AutoForm 内部同样依赖 SDB 支持。
 - `db.default_frame` 必须与 `.env [bootstrap]` 或进程 `bootstrap` 中载入的类一致。
 - Model 使用前需要执行 `DB('think')` 或 `DB('laravel')` 初始化对应 ORM。
 - 普通自定义进程要显式配置它需要的 bootstrap。

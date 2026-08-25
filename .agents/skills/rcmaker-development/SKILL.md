@@ -1,19 +1,27 @@
 ---
 name: rcmaker-development
-description: Develop, extend, debug, optimize, test, and package rcmaker PHP applications with framework-native APIs. Use for rcmaker controllers, APIs, CRUD, routes, middleware, request/response handling, databases, models, SDB, AutoForm, validation, cache, Redis, sessions, tokens, queues, built-in components, multi-application configuration, APP process groups, Workerman or Swoole runtimes, static preload, performance, source protection, buildBin, x86_64, or AArch64 delivery.
+description: Develop, extend, debug, optimize, test, and package rcmaker PHP applications under mandatory framework-native reuse rules. Use for rcmaker controllers, APIs, CRUD, routes, middleware, request/response handling, data collection, databases, models, SDB, AutoForm, validation, cache, Redis, sessions, tokens, queues, built-in components, multi-application configuration, APP process groups, Workerman or Swoole runtimes, static preload, performance, source protection, buildBin, x86_64, or AArch64 delivery.
 ---
 
 # rcmaker 快速开发
 
 使用 rcmaker 已有能力完成需求。目标不是写出“能运行的通用 PHP”，而是写出符合当前 rcmaker 项目约定、可在常驻内存和多进程环境中稳定运行的代码。
 
+> **硬性契约：框架已经提供的能力，业务代码必须复用，禁止自行实现同类功能。** 不知道 API、觉得原生写法更快、习惯其他框架、想减少查文档时间，都不是绕过 rcmaker 的理由。AI 生成的独立测试文件和测试夹具可以使用原生能力验证框架行为，但例外不得进入生产目录或被业务代码引用。
+
+原生 PHP 语法可以正常使用，包括控制流、数组与字符串处理、领域算法、数据转换和框架未覆盖的业务逻辑。禁止的是用原生 PHP 或第三方包重复实现 rcmaker 已有的请求、响应、验证、数据库层、缓存、会话、Token、队列、HTTP 客户端等能力。
+
 ## 不可跳过的原则
 
-1. **先查框架，再写代码。** 实现请求、响应、数据库、验证、CRUD、缓存、会话、鉴权、队列、分页、HTTP 客户端、文件或文档功能前，必须先确认 rcmaker 是否已有能力。
-2. **框架能力优先。** rcmaker 已提供合适能力时必须使用；不能因为更熟悉原生 PHP、PDO 或其他框架而重复实现。
-3. **源码是运行事实。** 先看当前项目用法和 `official/doc/md/`,如果不存在文档则访问在线文档 `https://rcmaker.runchance.com/doc/`，接口仍不明确时查看 `vendor/runchance/rcmaker-framework/src/`。不要猜方法名或参数。
-4. **第三方包是补充。** 只有框架没有对应能力、现有能力明显不适合需求，或用户明确指定时，才引入 Composer 包。先检查 `composer.json` 和现有依赖。
-5. **不得静默绕过。** 若决定不使用已有能力，实施前必须说明不适用原因、替代方案及常驻进程风险。
+1. **先查框架，再写代码。** 实现请求、响应、数据库、验证、CRUD、缓存、会话、鉴权、队列、分页、数据抓取、HTTP 客户端、文件或文档功能前，必须先确认 rcmaker 是否已有能力。在完成能力检索前，不得开始写替代实现。
+2. **框架能力不是“优先项”，而是唯一默认实现。** rcmaker 已提供合适能力时必须使用；禁止因为更熟悉原生 PHP、PDO、cURL、第三方 SDK 或其他框架而重复实现。
+3. **使用 AI 本地文档。** 项目已在 `./.agents/doc/` 提供完整 V3 文档，所有框架任务必须优先读取这里的对应 Markdown；接口仍不明确时查看 `vendor/runchance/rcmaker-framework/src/`。仅本地文档确实缺失时才访问 `https://rcmaker.runchance.com/doc/`，不要猜方法名或参数。
+4. **验证必须使用验证器。** 所有外部输入校验必须使用 `validator()` / `VD()` 的 `input()`、`check()`，或 AutoForm 的 `data` 验证规则；不得用散落的正则、`filter_var()` 或类型判断替代验证器组件。
+5. **数据库按固定层级选择。** 标准 CRUD、列表、分页和字段驱动操作使用 AutoForm；不适合 AutoForm 的普通数据库操作使用 `SDB()`；只有 AutoForm 与 SDB 都无法合理表达的复杂 SQL 才允许使用 `DB()` / `database()`。业务代码不得直接创建 PDO 或 mysqli 连接。
+6. **第三方包是补充。** 只有框架没有对应能力、现有能力明显不适合需求，或用户明确指定时，才引入 Composer 包。先检查 `composer.json` 和现有依赖。
+7. **不得静默绕过。** 只有当前版本确实没有所需能力时，才允许新增实现。实施前必须给出项目搜索、文档和源码三项核对结果，说明缺口、替代方案及常驻进程风险。
+8. **测试例外必须隔离。** `tests/`、`test/`、测试夹具和一次性诊断脚本可以使用原生 HTTP、PDO 或底层运行时 API 做独立验证；不得把测试回退代码复制到 `apps/`、`support/` 或生产进程中。
+9. **开发环境不能决定业务实现。** Windows 通常只是单进程开发环境，可能使用 SQLite 和 file 缓存；正式环境通常是 Linux 多进程，并切换到 Redis、MySQL 或 PostgreSQL。业务代码必须通过 rcmaker 配置与组件保持可移植，禁止写死平台、进程数、数据库驱动、SQL 方言、缓存驱动、连接地址或本机路径。
 
 ## 每次实现前必须读取
 
@@ -28,7 +36,21 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 - 打包、加密、独立运行或不同 CPU 架构：读 [delivery.md](references/delivery.md)。
 - 不确定能力或文档位置：读 [documentation-map.md](references/documentation-map.md)，再打开对应原文。
 
-不要只凭本文件中的速查表直接猜复杂组件用法。涉及组件时打开对应官方文档并核对当前源码。
+不要只凭本文件中的速查表直接猜复杂组件用法。涉及组件时打开 `.agents/doc/` 中的对应文档并核对当前源码。
+
+## 编码前能力闸门
+
+任何生产代码实现前，必须按顺序完成：
+
+1. 搜索目标应用和 `support/` 的相邻实现，确认项目已经采用的框架写法。
+2. 在 [framework-capabilities.md](references/framework-capabilities.md) 定位能力，并打开对应 `.agents/doc/md/` 原文。
+3. 对方法签名、返回类型或常驻复用行为不确定时，检查 `src/Start.php`、`src/Request.php` 和对应 Helper 源码。
+4. 写出本次能力映射，例如“抓取=`curl()`、验证=`validator()`、数据=`AutoForm` 或 `SDB()`、响应=`$req->json()`”。
+5. 仅当前三步均确认没有能力时，才评估现有 Composer 依赖、新依赖或小型自定义实现。
+
+“搜索不到自己猜测的方法名”不等于框架没有能力。应按需求关键词、助手函数、组件类名和文档目录继续查找。
+
+修改框架文档时，`official/doc/` 与 `.agents/doc/` 下的同路径 Markdown 必须在同一次任务中同步更新；`.agents/doc/` 是后续 AI 成员的本地事实来源，不能滞后。
 
 ## 框架原生基线
 
@@ -38,11 +60,10 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 | JSON 响应 | `return $req->json($data)` | `json_encode()` + 手工 Header/echo |
 | 普通响应 | `$req->response($body, $status, $headers)` | 直接 `header()`、`http_response_code()`、`echo` |
 | 视图 | `$req->V($template, $vars)` | 控制器内手工 `include` 模板 |
-| 输入验证 | `validator()` / `VD()` 后调用 `input()` 或 `check()` | 控制器里散落正则和类型判断 |
-| 默认数据库 | `DB()` / `database()` | `new PDO()`、`mysqli_connect()` |
-| 统一链式查询 | `$req->SDB()` / `SDB($req)` | 自建查询构造器 |
-| ORM 模型 | `RC\Model\Think` / `RC\Model\Laravel`，使用前初始化相应 `DB()` | 自建 Active Record 基类 |
-| 常规 CRUD | `$req->AF($vars)` / `autoForm()` | 重复编写通用增删改查流程 |
+| 所有外部输入验证 | `validator()` / `VD()` 的 `input()`、`check()`；AutoForm 字段使用 `data` 规则 | 手工正则、`filter_var()`、散落类型判断代替验证器 |
+| 标准 CRUD、列表、分页 | `$req->AF($vars)` / `autoForm()` | 手写重复增删改查或直接下沉数据库连接 |
+| AutoForm 不适合的普通数据库操作 | `$req->SDB()` / `SDB($req)` | PDO、mysqli、自建查询构造器 |
+| SDB 无法表达的复杂 SQL | `DB()` / `database()`，并说明为什么 SDB 不适用 | 把 DB 当作普通查询默认入口 |
 | 缓存 | `cache()` | 自制文件缓存或进程内数组冒充共享缓存 |
 | Redis | `redis()` / `RD()` | 每次请求 `new Redis()` 并重新连接 |
 | Session | `$req->session()` / `$req->S()` | `session_start()`、直接操作 `$_SESSION` |
@@ -50,7 +71,7 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 | Token 鉴权 | `$req->token()` / `$req->T()` | 自行拼装 JWT 流程 |
 | 队列 | `queue()->send()` + `support/queue` 消费者 | 请求里同步执行耗时工作或自造队列协议 |
 | 分页 | SDB `paginate()` / `RC\Helper\Paginator` | 每个接口重新实现页码和元数据 |
-| 外部 HTTP | `curl()` | 零散 `curl_init()` 或无超时的网络调用 |
+| 数据抓取、外部 API、Webhook 回调外发、文件下载 | `curl()`；并发使用 `curl(true)` | `curl_init()`、Guzzle、自写 Socket、URL `file_get_contents()`、shell `curl/wget` |
 | 下载/文件响应 | `$req->D()` 或 `$req->response()->file()/download()` | `readfile()` + 手工响应头 |
 | 环境值 | `rcEnv($name, $default)` 和现有配置文件 | 业务代码硬编码端口、凭据或路径 |
 
@@ -73,11 +94,30 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 请求=$req API
 响应=$req->json()
 验证=validator()->input()
-数据=DB()/SDB()/Model/AutoForm 中与项目一致的一种
+数据=AutoForm -> SDB() -> 复杂 SQL 才 DB() 的三级选择
 缓存/会话/鉴权/队列=对应 rcmaker 组件
 ```
 
 若某项不用框架能力，先核实框架确实不支持，不能直接省略这一步。
+
+### 多应用、多进程和静态应用决策
+
+- 普通 HTTP 应用默认属于主 APP 进程组；不设置 `bind_process`。
+- 需要独立端口、进程数、重启或资源配额时，在 `config/process.php` 创建 `type => 'app'` 进程组，并在 `config/app.php` 用 `bind_process` 绑定。
+- 多个应用可以绑定同一个 APP 进程组；绑定组未启用或未启动时，这些应用不生效，不得自动回退主 APP。
+- 不得让主 APP 和自定义 APP 依靠同端口 `reusePort` 按 Host 分流；使用不同内部端口和反向代理。
+- 队列消费者、定时任务、采集守护进程、TCP/WebSocket/Text 服务使用普通自定义进程，不伪装成 `type=app`。
+- AI 新建静态应用时，默认显式设置 `enable_static_file => true` 和 `enable_static_preload => true`；纯静态站同时设置 `static_only => true`。只有资源很大、频繁变化或内存预算不允许时才关闭预加载，并说明原因。
+- 静态应用可用 `bind_process` 独立到专用 APP 进程组。Linux 全局预热后 fork 并通过写时复制继承；Windows 按应用所属进程组分别预热，不是假设存在跨进程共享缓存。
+
+### Windows 开发与 Linux 生产兼容
+
+- Windows 不支持或未启用多进程时，只能证明单进程开发流程可用，不能证明跨 Worker 状态、锁、事务、缓存一致性和并发行为正确。
+- 不得把可变业务状态保存在静态属性、全局数组、单例字段或本地临时文件中。需要跨请求、跨 Worker 或跨机器共享的状态，必须通过 `cache()`、Session、Redis 或数据库等框架能力保存。
+- SQLite、file 缓存只可作为可配置的开发驱动。通过 `.env` 和 `config/*.php` 选择驱动与连接，业务代码不得出现固定 DSN、Redis 地址、缓存目录或数据库厂商判断。
+- 优先使用 AutoForm、SDB 和 `cache()` 等抽象，避免依赖 SQLite/MySQL/PostgreSQL 特有的引号、函数、字段类型、布尔值、日期、UPSERT 或自增语义。确需厂商专用复杂 SQL 时，将差异隔离并明确测试目标数据库。
+- 文件路径使用项目路径助手和跨平台路径处理；业务逻辑不得写死盘符、反斜杠、`/tmp`、用户目录或 Linux 命令。
+- 上线前必须在 Linux 的实际进程数、数据库和 Redis/cache 驱动下验证启动、并发、事务、状态共享和重启；Windows + SQLite + file cache 的测试不能替代这一步。
 
 ### 3. 实现最小完整链路
 
@@ -92,13 +132,19 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 
 ### 5. 验证框架使用情况
 
-检查新增代码中的通用 PHP 回退写法：
+先运行 Skill 自带审计脚本检查业务目录，再检查本次改动：
+
+```shell
+php .agents/skills/rcmaker-development/scripts/audit-framework-usage.php apps support
+```
+
+审计命中必须逐项处理；测试目录会自动跳过。必要时再搜索通用 PHP 回退写法：
 
 ```powershell
 rg -n "json_encode\s*\(|new\s+\\?PDO|mysqli_|session_start\s*\(|setcookie\s*\(|curl_init\s*\(|header\s*\(" apps support
 ```
 
-命中不一定错误，例如签名、日志或队列内部序列化可以使用 `json_encode()`；但每个命中都要确认不是在重新实现 rcmaker 已提供的请求、响应或组件能力。
+命中不一定错误，例如签名、日志或队列内部序列化可以使用 `json_encode()`；但每个生产代码命中都要给出用途，确认不是在重新实现 rcmaker 已提供的请求、响应或组件能力。数据抓取中的原生网络调用不属于可接受回退，必须改用 `curl()`，除非已经证明框架客户端不支持目标协议。
 
 ### 6. 测试和交付
 
@@ -110,9 +156,12 @@ rg -n "json_encode\s*\(|new\s+\\?PDO|mysqli_|session_start\s*\(|setcookie\s*\(|c
 ## 明确禁止
 
 - 不得用 `json_encode()`、手工 Content-Type 和 `echo` 代替 `$req->json()` 返回 HTTP JSON。
-- 不得在 rcmaker 业务代码中自行创建 PDO、mysqli、Redis 长连接；优先复用 `DB()`、`SDB()`、Model、`redis()`。
+- 不得在 rcmaker 业务代码中自行创建 PDO、mysqli 或 Redis 长连接。
+- 不得跳过数据库三级选择：能用 AutoForm 不直接写 SDB，能用 SDB 不直接写 DB；使用 DB 时必须说明复杂 SQL 需求。
+- 不得用手工正则、`filter_var()` 或散落类型判断替代框架验证器处理外部输入。
 - 不得直接使用 PHP 原生 Session、Cookie、上传和响应 API 绕过 Request/Response 适配层。
 - 不得在已有 Validator、AutoForm、Paginator、Cache、Token、Queue、Curl 等组件满足需求时自行复制一套。
+- 不得在数据采集、网页抓取、第三方 API、文件下载或回调通知中使用原生 cURL、Guzzle、URL 流或 shell 网络命令；统一使用 `curl()` / `curl(true)`。
 - 不得为了一个功能随意安装与框架已有能力重复的 Composer 包。
 - 不得假设其他框架的 `config()`、`request()`、`response()`、ORM 或容器 API 在 rcmaker 中存在。
 - 不得只修改 `vendor` 来完成项目业务需求；框架本身的任务除外。
@@ -120,8 +169,11 @@ rg -n "json_encode\s*\(|new\s+\\?PDO|mysqli_|session_start\s*\(|setcookie\s*\(|c
 ## 完成标准
 
 - 使用了当前项目和 rcmaker 的原生接口，而不是通用 PHP 替代实现。
+- 原生 PHP 仅用于正常语言逻辑和框架未覆盖的领域实现，没有重复实现框架组件。
+- 已列出本次能力映射，并通过框架复用审计；所有生产代码命中均已消除或具有“框架当前不支持”的源码证据。
 - 每个复杂组件的调用签名均已从当前文档或源码核实。
 - 输入经过验证，输出使用框架响应，数据层与项目配置一致。
 - 无跨请求、跨协程、跨应用或跨进程状态污染。
+- Windows 开发配置与 Linux 生产配置可以仅通过环境和配置切换；业务代码没有写死数据库、缓存、路径或单进程假设。
 - 没有引入重复组件、无界缓存、无界查询、同步耗时任务或不必要的热路径开销。
 - 测试通过；无法运行的检查、需要的重启和部署条件已明确说明。

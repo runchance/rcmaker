@@ -1,6 +1,6 @@
 # Delivery And Source Protection
 
-rcmaker V3 is the current development line in this repository. Use `official/doc/v2/` only for legacy V2 projects and do not silently mix V2 configuration or APIs into V3 work.
+This repository and its `.agents/doc/` directory describe the current rcmaker V3 line. Do not introduce configuration or APIs from older releases.
 
 ## Distinguish The Artifacts
 
@@ -38,9 +38,13 @@ Build with source protection when required:
 php -d phar.readonly=0 ./scripts/buildBin.php --with-php=8.5 --platform=auto --arch=auto --encrypt
 ```
 
-Encryption executes a target-specific protection tool and therefore requires the build host to match the target platform and architecture. For current behavior, inspect `RC\Cli\Interactive` and its command classes. Inspect `scripts/` only for an explicitly requested legacy fallback; do not use those files as the source of truth for the framework-native workflow.
+Encryption executes the protection tool for the build host; its protected PHP payload is platform-independent. The Micro SFX still follows the selected target platform and architecture, so protected binaries may be cross-built. For current behavior, inspect `RC\Cli\Interactive` and its command classes. Inspect `scripts/` only for an explicitly requested legacy fallback; do not use those files as the source of truth for the framework-native workflow.
 
 The expected deliverable is `build/rcmaker.bin` on Linux/macOS and `build/rcmaker.exe` on Windows. Keep `.env` beside the binary when the project reads external deployment configuration that way. Do not embed production credentials into the package.
+
+The binary builder excludes known non-runtime inputs by default: Markdown/reStructuredText/source maps; AI, IDE and VCS directories; root build, runtime, scripts, tests, tools, coverage, Node modules and official-site sources; Composer/npm manifests and development-tool configuration; and dependency tests, examples, benchmarks and docs under `vendor/`. User-supplied exclusions are additional to this policy.
+
+Do not broaden the default policy to all JSON, YAML, XML, certificates, templates or `public/` assets because applications may load them at runtime. `.env` is retained by default for compatibility; exclude it explicitly when deployment provides it beside the executable.
 
 ## Packaged Runtime Behavior
 
@@ -68,4 +72,4 @@ Source protection raises reverse-engineering cost. It does not protect runtime s
 - Health, shutdown, logs and restart behavior are verified.
 - A clean-host smoke test covers one dynamic route, one static asset, storage access and required external services.
 
-Read `official/doc/md/interact.md` first, followed by `official/doc/md/download.md` and `official/doc/md/install.md`. Read documents under `official/doc/md/scripts/` only when maintaining an explicitly requested legacy fallback.
+Read `.agents/doc/md/interact.md` first, followed by `.agents/doc/md/download.md` and `.agents/doc/md/install.md`. Read documents under `.agents/doc/md/scripts/` only when maintaining an explicitly requested legacy fallback.

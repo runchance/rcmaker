@@ -4,12 +4,12 @@
 
 ## 组件优先规则
 
-1. 输入进入业务前使用 Validator。
-2. 标准 CRUD 优先评估 AutoForm；数据访问细节见 [data-access.md](data-access.md)。
+1. 所有外部输入进入业务前必须使用 Validator；AutoForm 字段通过 `data` 规则复用验证器能力。
+2. 标准 CRUD、列表和分页必须使用 AutoForm；其余数据库操作遵守 AutoForm -> SDB -> 复杂 SQL 才 DB 的层级，详见 [data-access.md](data-access.md)。
 3. 跨请求或跨进程状态使用 Cache、Redis、Session 或数据库，不使用 PHP 静态数组。
 4. 身份令牌使用 Token；图形/短信验证码分别使用 Captcha/SMS。
 5. 耗时或可重试任务投递 Queue，不阻塞 HTTP 请求。
-6. 外部 HTTP 使用 `curl()`，统一设置超时并处理错误。
+6. 外部 HTTP、数据采集、网页抓取和下载只能使用 `curl()` / `curl(true)`，统一设置超时并处理错误。
 7. Excel、PDF、二维码、拼音、邮件等使用框架封装，不直接拼底层库初始化流程。
 
 ## Validator
@@ -48,7 +48,7 @@ $id = validator()->check($req->get('id'), [
 ]);
 ```
 
-支持规则和文件校验以 `official/doc/md/module/validation.md` 为准。不要假设 Laravel 风格的字符串规则语法；rcmaker 当前验证规则采用数组配置。
+支持规则和文件校验以 `.agents/doc/md/module/validation.md` 为准。不要假设 Laravel 风格的字符串规则语法；rcmaker 当前验证规则采用数组配置。
 
 ## Cache
 
@@ -58,15 +58,23 @@ $id = validator()->check($req->get('id'), [
 $cache = cache();
 $cache->set('user:'.$id, $user, 3600);
 $user = $cache->get('user:'.$id);
-$user = $cache->remember('user:'.$id, function () use ($id) {
-    return DB()->get('users', '*', ['id' => $id]);
+$user = $cache->remember('user:'.$id, function () use ($req, $id) {
+    return $req->AF([
+        'type' => 'get',
+        'table' => 'users',
+        'id' => $id,
+        'index' => 'id',
+        'name' => '用户',
+    ])->handle();
 });
 $cache->delete('user:'.$id);
 ```
 
-常用能力包括 `get`、`set`、`delete`、`pull`、`clear`、`remember`、`inc`、`dec`、`push` 和标签。完整行为见 `official/doc/md/module/cache.md`。
+常用能力包括 `get`、`set`、`delete`、`pull`、`clear`、`remember`、`inc`、`dec`、`push` 和标签。完整行为见 `.agents/doc/md/module/cache.md`。
 
 缓存设计必须说明 key 维度、TTL 和失效时机。用户、租户、权限或语言影响结果时必须进入 key。`clear()` 属于高影响操作，不能用于普通业务失效。
+
+Windows 开发可以配置 file 缓存，Linux 生产可以切换 Redis，但业务代码必须始终调用 `cache()` 并保持 key、TTL、失效规则和数据格式一致。不得读取 file 缓存内部目录或文件格式，也不得在业务代码中写死 Redis 地址。依赖原子计数、锁、限流或跨 Worker 一致性的功能，必须按生产 Redis/cache 驱动的实际语义测试；file 驱动本地通过不代表多进程行为正确。
 
 ## Redis
 
@@ -79,7 +87,7 @@ $payload = $redis->get('user:'.$id);
 $redis->del('user:'.$id);
 ```
 
-支持 raw/mix 引擎、多连接、事务、pipeline、订阅等，准确接口见 `official/doc/md/db/redis.md`。不要每个请求 `new Redis()` 并 connect；不要在请求热路径使用 `keys('*')`。
+支持 raw/mix 引擎、多连接、事务、pipeline、订阅等，准确接口见 `.agents/doc/md/db/redis.md`。不要每个请求 `new Redis()` 并 connect；不要在请求热路径使用 `keys('*')`。
 
 Redis 是跨 Worker 共享状态；普通 PHP 数组和静态属性不是。分布式锁、计数器、限流、Session、Token 状态要考虑原子性和过期时间。
 
@@ -96,7 +104,7 @@ $session->delete('user_id');
 $all = $session->all();
 ```
 
-简写映射 `$req->S()`：数组表示设置，字符串表示读取，`null` 表示读取全部。完整行为见 `official/doc/md/session.md`。
+简写映射 `$req->S()`：数组表示设置，字符串表示读取，`null` 表示读取全部。完整行为见 `.agents/doc/md/session.md`。
 
 读取 Cookie：
 
@@ -111,7 +119,7 @@ $req->SC(['theme' => 'dark']);
 return $req->response('ok');
 ```
 
-或使用响应对象 `cookie()`。安全 Cookie 要根据部署设置 Secure、HttpOnly、SameSite、Domain、Path 和有效期，见 `official/doc/md/cookie.md`。不得使用原生 `session_start()`、`$_SESSION` 或 `setcookie()` 绕过运行时适配。
+或使用响应对象 `cookie()`。安全 Cookie 要根据部署设置 Secure、HttpOnly、SameSite、Domain、Path 和有效期，见 `.agents/doc/md/cookie.md`。不得使用原生 `session_start()`、`$_SESSION` 或 `setcookie()` 绕过运行时适配。
 
 ## Token 鉴权
 
@@ -141,7 +149,7 @@ try {
 }
 ```
 
-刷新使用 `reSet()`；不同 guard 使用 `$req->token('admin')`。Token 来源、算法、证书、刷新和单设备登录见 `official/doc/md/module/token.md`；签名密钥优先通过 `php index.php interact` 的菜单 4 生成。`official/doc/md/scripts/tokenKey.md` 只用于传统兼容流程。不要自行实现 JWT 签发、刷新和互斥登录状态。
+刷新使用 `reSet()`；不同 guard 使用 `$req->token('admin')`。Token 来源、算法、证书、刷新和单设备登录见 `.agents/doc/md/module/token.md`；签名密钥优先通过 `php index.php interact` 的菜单 4 生成。`.agents/doc/md/scripts/tokenKey.md` 只用于传统兼容流程。不要自行实现 JWT 签发、刷新和互斥登录状态。
 
 ## Captcha 与 SMS
 
@@ -160,7 +168,7 @@ public function verify($req)
 }
 ```
 
-校验值为空可能抛异常。存储方式、连接和闭包参数见 `official/doc/md/module/captcha.md`。
+校验值为空可能抛异常。存储方式、连接和闭包参数见 `.agents/doc/md/module/captcha.md`。
 
 短信验证码配置：`config/sms.php`。
 
@@ -170,7 +178,7 @@ $code = $sms->create();
 $ok = $sms->code($inputCode)->check();
 ```
 
-场景要区分登录、注册、找回密码等；发送前配合 Throttler。验证码生成、自动删除、有效期和短信服务商接入见 `official/doc/md/module/sms.md`。
+场景要区分登录、注册、找回密码等；发送前配合 Throttler。验证码生成、自动删除、有效期和短信服务商接入见 `.agents/doc/md/module/sms.md`。
 
 ## Queue
 
@@ -203,7 +211,7 @@ class SendMail
 }
 ```
 
-消费者正常结束才确认成功；抛出异常进入重试/失败流程。消息只携带可序列化标识和必要参数，不携带 Request、连接或服务容器。幂等、重试、多连接和消费进程配置见 `official/doc/md/queue.md`。
+消费者正常结束才确认成功；抛出异常进入重试/失败流程。消息只携带可序列化标识和必要参数，不携带 Request、连接或服务容器。幂等、重试、多连接和消费进程配置见 `.agents/doc/md/queue.md`。
 
 ## Throttler
 
@@ -236,11 +244,13 @@ class ApiThrottle
 }
 ```
 
-`capacity`、`seconds`、`cost` 必须大于 0，且 cost 不大于 capacity。key 应按动作、用户、手机号或 IP 设计，见 `official/doc/md/module/throttler.md`。
+`capacity`、`seconds`、`cost` 必须大于 0，且 cost 不大于 capacity。key 应按动作、用户、手机号或 IP 设计，见 `.agents/doc/md/module/throttler.md`。
 
 ## Curl HTTP 客户端
 
 `curl()` 返回单请求实例，`curl(true)` 返回并发客户端；它们不是 Request 映射。
+
+这是生产代码的强制网络出口。禁止用原生 cURL、Guzzle、URL 文件流、自写 Socket 或 shell 命令重新实现同类 HTTP 能力。测试文件可以使用独立客户端从进程外验证接口，但测试写法不能复制进业务代码。
 
 ```php
 $client = curl();
@@ -260,7 +270,7 @@ if ($client->error) {
 return $req->json(['code' => 0, 'data' => $client->response]);
 ```
 
-每次调用 `curl()` 都是新实例，不会串联上次 Header、Cookie 或回调。始终设置合理超时，处理 HTTP 状态和错误，不在响应中泄露上游凭据。并发和下载见 `official/doc/md/module/curl.md`。
+每次调用 `curl()` 都是新实例，不会串联上次 Header、Cookie 或回调。始终设置合理超时，处理 HTTP 状态和错误，不在响应中泄露上游凭据。并发和下载见 `.agents/doc/md/module/curl.md`。
 
 ## Mailer
 
@@ -279,11 +289,11 @@ if (!$sent) {
 }
 ```
 
-`mailer()` 按连接缓存 helper，但当前 `send()` 后会重置本次消息状态。大量或可重试邮件应投递 Queue。附件、HTML、抄送和错误处理见 `official/doc/md/module/mailer.md`。
+`mailer()` 按连接缓存 helper，但当前 `send()` 后会重置本次消息状态。大量或可重试邮件应投递 Queue。附件、HTML、抄送和错误处理见 `.agents/doc/md/module/mailer.md`。
 
 ## Paginator
 
-数据查询优先使用 SDB `paginate()`。手工数据源可构造 `RC\Helper\Paginator`，其 JSON 输出包含 total、per_page、current_page、last_page、has_more、data。API 直接交给 `$req->json($paginator)`，不要手写每套分页元数据。见 `official/doc/md/module/paginator.md`。
+标准数据库分页使用 AutoForm `type => 'paginate'`。AutoForm 不适合且已使用 SDB 的场景可调用 SDB `paginate()`；手工数据源可构造 `RC\Helper\Paginator`。API 直接交给 `$req->json($paginator)`，不要重写分页元数据。见 `.agents/doc/md/module/paginator.md`。
 
 ## Excel、PDF、二维码与拼音
 
@@ -296,7 +306,7 @@ if (!$sent) {
 
 ## StopWatch
 
-使用 `stopwatch()` 或组件文档中的静态接口进行定向分析。只在诊断需要时启用，不在生产热路径长期输出明细。见 `official/doc/md/module/stopWatch.md`。
+使用 `stopwatch()` 或组件文档中的静态接口进行定向分析。只在诊断需要时启用，不在生产热路径长期输出明细。见 `.agents/doc/md/module/stopWatch.md`。
 
 ## 组件完成检查
 
@@ -305,4 +315,5 @@ if (!$sent) {
 - 没有自行实现 JSON HTTP、数据库连接、缓存、Session、Token、验证码、分页或队列协议。
 - 组件实例的复用符合文档；没有跨请求残留收件人、用户、Header 或回调状态。
 - 所有网络、缓存、队列和文件操作都有超时、TTL、边界或失败处理。
+- Windows file cache 与 Linux Redis/cache 可通过配置切换，业务代码没有驱动、地址、目录或单进程假设。
 - Swoole 协程模式已核实底层依赖是否协程安全。

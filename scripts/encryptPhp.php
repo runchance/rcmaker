@@ -476,7 +476,6 @@ try {
     $platform = rcartifact_normalize_platform($options['platform']);
     $arch = rcartifact_normalize_arch($options['arch']);
     rcartifact_assert_target($platform, $arch);
-    rcartifact_assert_host_target($platform, $arch, 'PHP encryption');
 
     $inputPath = $options['input'];
     $outputPath = $options['output'];
@@ -486,7 +485,11 @@ try {
     $customIni = encryptphp_resolve_custom_ini($options['custom-ini']);
     $workDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR . '/\\') . DIRECTORY_SEPARATOR . 'rcmaker-encrypt-php';
     encryptphp_mkdir($workDir);
-    $encryptBinary = encryptphp_ensure_encrypt_binary($workDir, $platform, $arch);
+    $encryptBinary = encryptphp_ensure_encrypt_binary(
+        $workDir,
+        rcartifact_current_platform(),
+        rcartifact_current_arch()
+    );
 
     if (!file_exists($inputPath)) {
         throw new RuntimeException('Input path does not exist: ' . $inputPath);

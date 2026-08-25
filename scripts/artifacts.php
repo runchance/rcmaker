@@ -89,18 +89,6 @@ function rcartifact_assert_target(string $platform, string $arch): void
     }
 }
 
-function rcartifact_assert_host_target(string $platform, string $arch, string $operation): void
-{
-    $hostPlatform = rcartifact_current_platform();
-    $hostArch = rcartifact_current_arch();
-    if ($platform !== $hostPlatform || $arch !== $hostArch) {
-        throw new RuntimeException(
-            $operation . ' executes a platform-specific tool and must run on the target platform. '
-            . "Host is {$hostPlatform}/{$hostArch}; target is {$platform}/{$arch}."
-        );
-    }
-}
-
 function rcartifact_runtime_archive(string $version, string $platform, string $arch): string
 {
     return "php{$version}-{$platform}-{$arch}.zip";

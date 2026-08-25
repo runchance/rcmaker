@@ -62,10 +62,13 @@ class user
             'name' => '用户ID',
         ]);
 
-        $user = $req->SDB()
-            ->table('users')
-            ->where('id', $id)
-            ->find('*');
+        $user = $req->AF([
+            'type' => 'get',
+            'table' => 'users',
+            'id' => $id,
+            'index' => 'id',
+            'name' => '用户',
+        ])->handle();
 
         if (!$user) {
             $response = $req->json(['code' => 404, 'msg' => '用户不存在']);
@@ -86,7 +89,7 @@ class user
 
 - Request 是第一个参数；路由参数随后。
 - 输入使用 `$req` 与 Validator。
-- 数据使用项目已有 `DB()`、SDB、Model 或 AutoForm。
+- 数据库按 AutoForm -> SDB -> 复杂 SQL 才 DB 的层级选择；标准 CRUD、列表和分页使用 AutoForm。
 - JSON 使用 `$req->json()`，不要手工编码。
 - 业务错误遵循项目已有 code 和 HTTP 状态约定。
 - 控制器对象在 CLI 下可能复用，不在属性中保存请求临时状态，也不依赖构造函数做“每请求初始化”。
@@ -110,7 +113,7 @@ $ip = $req->ip();
 
 使用 `$req->acceptJson()`、`expectsJson()`、`isAjax()` 等判断请求偏好。业务代码原则上不读取 PHP 超全局变量，也不直接依赖底层 Workerman/Swoole 请求。
 
-上传文件必须验证大小、MIME、扩展名和文件名，在当前请求内移动到允许目录。CLI 和 FPM 的上传大小限制来源不同，见 `official/doc/md/request.md`。
+上传文件必须验证大小、MIME、扩展名和文件名，在当前请求内移动到允许目录。CLI 和 FPM 的上传大小限制来源不同，见 `.agents/doc/md/request.md`。
 
 ## 响应 API
 
@@ -207,4 +210,4 @@ return $req->V('user/detail', [
 6. HTTP 状态、Header、CORS、Cookie 和错误信息正确。
 7. 运行 `php -l`、相关测试，并通过真实引擎请求验证。
 
-详细文档：`official/doc/md/apps.md`、`controller.md`、`route.md`、`request.md`、`response.md`、`middleware.md`、`view.md`、`exception.md`。
+详细文档：`.agents/doc/md/apps.md`、`controller.md`、`route.md`、`request.md`、`response.md`、`middleware.md`、`view.md`、`exception.md`。

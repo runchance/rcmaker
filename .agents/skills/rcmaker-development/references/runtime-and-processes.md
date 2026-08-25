@@ -77,6 +77,8 @@ server {
 
 ## Configure Static Applications
 
+AI 新建静态应用时，默认开启框架静态文件与预加载能力。纯静态站的推荐基线是：
+
 ```php
 'website' => [
     'domains' => ['www.example.com'],
@@ -90,6 +92,14 @@ server {
 
 `static_only=true` means a static miss returns 404 and does not fall through to dynamic routing. Confirm that `public/website` exists and that the requested Host and port reach `RC_STATIC`.
 
+Rules for generated configuration:
+
+- Set `enable_static_file => true` explicitly.
+- Set `enable_static_preload => true` explicitly by default; do not omit it and rely on framework defaults, because the framework-level default is disabled.
+- Use `static_only => true` for documentation sites, H5 bundles, front-end build output and pure asset services.
+- Use `static_only => false` when the same application must continue to routes/controllers after a static miss.
+- Disable preload only for large, highly mutable assets or a strict memory budget, and state why. Prefer limiting `static_preload_extensions` and `static_preload_time_limit` before disabling it entirely.
+
 Useful controls include `static_preload_extensions`, `static_preload_time_limit`, and `enable_static_gzip`. Bound apps are preloaded according to process ownership.
 
 | Platform | Preload behavior |
@@ -99,6 +109,17 @@ Useful controls include `static_preload_extensions`, `static_preload_time_limit`
 
 Preload only bounded, frequently requested assets. Large or mutable files may consume memory without improving useful throughput.
 
+## Develop On Windows, Run On Linux
+
+Treat Windows as a development profile when it cannot run the production process topology. A successful Windows single-process run does not validate Linux multi-worker state sharing, locking, transactions, restart behavior or concurrency.
+
+- Keep request handlers stateless. Never depend on a static property, global array, singleton field or local temporary file being visible to another worker.
+- Store shared state through configured rcmaker Cache, Redis, Session or database components.
+- Read process counts, ports, drivers, endpoints and paths from `.env` and `config/*.php`; do not hardcode them in controllers or services.
+- Keep platform branches in startup, deployment and configuration code. Business behavior should not change based on `PHP_OS_FAMILY`.
+- Use project path helpers and portable path operations instead of drive letters, `/tmp`, user-home paths or shell-specific commands.
+- Before release, test on Linux with the intended APP groups, worker counts, Redis/cache backend and database engine.
+
 ## Restart And Observe
 
 - Configuration and bootstrap changes require the affected process group to restart.
@@ -106,4 +127,4 @@ Preload only bounded, frequently requested assets. Large or mutable files may co
 - Validate ownership using both expected success and expected 404 cases across main and custom ports.
 - Review startup output for duplicate listeners, failed process groups, preload time limits and unexpected exits.
 
-See `official/doc/md/app-process.md`, `apps.md`, `process.md`, `static.md`, `cli.md`, and `fpm.md` for current user-facing details.
+See `.agents/doc/md/app-process.md`, `apps.md`, `process.md`, `static.md`, `cli.md`, and `fpm.md` for current user-facing details.

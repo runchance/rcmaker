@@ -4,6 +4,28 @@ define('ROOT_PATH', dirname(__FILE__,2));
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/artifacts.php';
 
+const BUILDBIN_DEFAULT_EXCLUDE_PREFIXES = [
+    '/.agents', '/.claude', '/.codex', '/.continue', '/.cursor', '/.gemini', '/.github',
+    '/.idea', '/.roo', '/.setting', '/.tmp', '/.vscode', '/build', '/coverage',
+    '/node_modules', '/official', '/runtime', '/scripts', '/test', '/tests', '/tools', '/vendor-bin',
+];
+const BUILDBIN_DEFAULT_EXCLUDE_DIRECTORY_NAMES = [
+    '.agents', '.claude', '.codex', '.continue', '.cursor', '.gemini', '.git', '.github',
+    '.hg', '.idea', '.roo', '.setting', '.svn', '.vscode', 'node_modules', 'vendor-bin',
+];
+const BUILDBIN_DEFAULT_EXCLUDE_VENDOR_DIRECTORY_NAMES = [
+    'benchmark', 'benchmarks', 'doc', 'docs', 'example', 'examples', 'test', 'tests',
+];
+const BUILDBIN_DEFAULT_EXCLUDE_FILE_NAMES = [
+    '.editorconfig', '.env.example', '.gitattributes', '.gitignore', '.gitmodules',
+    'bun.lock', 'bun.lockb', 'composer.json', 'composer.lock', 'compose.yaml', 'compose.yml',
+    'docker-compose.yaml', 'docker-compose.yml', 'dockerfile', 'jsconfig.json', 'makefile',
+    'package-lock.json', 'package.json', 'phpstan.neon', 'phpstan.neon.dist', 'phpunit.xml',
+    'phpunit.xml.dist', 'pnpm-lock.yaml', 'psalm.xml', 'rector.php', 'tsconfig.json',
+    'windows.bat', 'yarn.lock',
+];
+const BUILDBIN_DEFAULT_EXCLUDE_EXTENSIONS = ['map', 'markdown', 'md', 'rst'];
+
 function buildbin_normalize_relative_path(string $path): string
 {
     return '/' . ltrim(str_replace('\\', '/', $path), '/');
@@ -51,6 +73,41 @@ function buildbin_should_exclude(string $normalizedPath, array $excludePaths): b
     }
 
     return false;
+}
+
+function buildbin_contains_directory_named(string $normalizedPath, array $directoryNames): bool
+{
+    foreach (explode('/', trim(str_replace('\\', '/', $normalizedPath), '/')) as $segment) {
+        if (in_array(strtolower($segment), $directoryNames, true)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function buildbin_should_exclude_default(string $normalizedPath): bool
+{
+    $normalizedPath = buildbin_normalize_relative_path($normalizedPath);
+    if (buildbin_contains_directory_named($normalizedPath, BUILDBIN_DEFAULT_EXCLUDE_DIRECTORY_NAMES)) {
+        return true;
+    }
+    foreach (BUILDBIN_DEFAULT_EXCLUDE_PREFIXES as $prefix) {
+        if ($normalizedPath === $prefix || str_starts_with($normalizedPath, $prefix . '/')) {
+            return true;
+        }
+    }
+    if (str_starts_with($normalizedPath, '/vendor/')
+        && buildbin_contains_directory_named($normalizedPath, BUILDBIN_DEFAULT_EXCLUDE_VENDOR_DIRECTORY_NAMES)
+    ) {
+        return true;
+    }
+
+    $fileName = strtolower(basename($normalizedPath));
+    if (in_array($fileName, BUILDBIN_DEFAULT_EXCLUDE_FILE_NAMES, true)) {
+        return true;
+    }
+    $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    return $extension !== '' && in_array($extension, BUILDBIN_DEFAULT_EXCLUDE_EXTENSIONS, true);
 }
 
 function buildbin_mkdir(string $path): void
@@ -143,7 +200,6 @@ function buildbin_cleanup_build_dir(string $buildDir, string $keepFileName): voi
 function buildbin_copy_tree(
     string $sourceRoot,
     string $targetRoot,
-    string $excludePattern,
     array $excludePaths
 ): void
 {
@@ -157,7 +213,7 @@ function buildbin_copy_tree(
         $relativePath = substr($sourcePath, strlen($sourceRoot) + 1);
         $normalizedPath = buildbin_normalize_relative_path($relativePath);
 
-        if (!preg_match($excludePattern, $normalizedPath)
+        if (buildbin_should_exclude_default($normalizedPath)
             || buildbin_should_exclude($normalizedPath, $excludePaths)
         ) {
             continue;
@@ -297,7 +353,6 @@ if($customIni){
         $customIni = str_replace(";","\n",$customIni);
     }
 }
-$exclude_pattern = "#^(?!.*(composer.json|/.github/|/.idea/|/.git/|/.setting/|/runtime/|/vendor-bin/|/build/|/scripts/|/official/download/))(.*)$#";
 $signature_algorithm = Phar::SHA256;
 $excludePaths = buildbin_parse_exclude_paths($options['exclude-files']);
 $stagingDir = ROOT_PATH . '/build/rcmaker-phar-src';
@@ -313,16 +368,18 @@ buildbin_remove_path($phar_file);
 buildbin_remove_dir($stagingDir);
 try {
     buildbin_mkdir($stagingDir);
-    buildbin_copy_tree(ROOT_PATH, $stagingDir, $exclude_pattern, $excludePaths);
+    buildbin_copy_tree(ROOT_PATH, $stagingDir, $excludePaths);
     if (!is_file($stagingDir . DIRECTORY_SEPARATOR . $entryFile)) {
         throw new RuntimeException(
             "Build entry {$entryFile} is missing or excluded for target {$platform}/{$arch}."
         );
     }
     if ($options['encrypt']) {
-        rcartifact_assert_host_target($platform, $arch, 'Encrypted build');
         echo "Encrypt staged distribution files...\r\n";
-        $encryptBinary = buildbin_ensure_encrypt_binary($platform, $arch);
+        $encryptBinary = buildbin_ensure_encrypt_binary(
+            rcartifact_current_platform(),
+            rcartifact_current_arch()
+        );
         buildbin_encrypt_tree($stagingDir, $encryptBinary);
     }
 

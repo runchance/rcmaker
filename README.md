@@ -27,8 +27,9 @@ rcmaker 是一个面向快速交付的 PHP 常驻内存应用框架。它保留�
 
 | 目标 | 文档 |
 | --- | --- |
+| 第一次使用，快速跑起项目 | [5 分钟开始](https://rcmaker.runchance.com/doc/#/md/quick-start) |
 | 安装运行环境并启动项目 | [安装与启动](https://rcmaker.runchance.com/doc/#/md/install) |
-| 下载独立 PHP、Composer 与构建资源 | [独立运行时与构建资源](https://rcmaker.runchance.com/doc/#/md/download) |
+| 下载独立 PHP CLI | [独立 PHP CLI 下载](https://rcmaker.runchance.com/doc/#/md/download) |
 | 构建、加密、注册服务和生成签名密钥（推荐） | [交互式项目工具](https://rcmaker.runchance.com/doc/#/md/interact) |
 | 了解项目目录和入口文件 | [目录结构](https://rcmaker.runchance.com/doc/#/md/directory) |
 | 编写接口和页面控制器 | [控制器](https://rcmaker.runchance.com/doc/#/md/controller) / [路由](https://rcmaker.runchance.com/doc/#/md/route) |

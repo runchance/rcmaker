@@ -1,4 +1,4 @@
 interface:
   display_name: "rcmaker 快速开发"
   short_description: "基于 rcmaker 快速设计、开发、优化并交付 PHP 项目"
-  default_prompt: "使用 $rcmaker-development，先读取框架能力目录及任务对应参考，优先使用 rcmaker 现有功能和组件，并结合当前源码完成可验证实现；不要重复实现框架已有能力。"
+  default_prompt: "使用 $rcmaker-development。先完成框架能力映射再编码；原生 PHP 语法允许，但不得重复实现 rcmaker 已有组件。输入校验必须使用验证器；数据库按 AutoForm、SDB、复杂 SQL 才 DB 的层级选择；数据抓取必须使用 curl()；同时遵守多应用、APP 进程组和静态预加载规则。Windows 开发代码必须兼容 Linux 多进程生产环境及可切换的数据库、Redis/cache 驱动，禁止写死环境。"
