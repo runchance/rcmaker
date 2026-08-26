@@ -9,6 +9,10 @@ This repository is an rcmaker project. Before changing production code, configur
 
 Do not start implementation until the framework capability mapping required by the Skill is complete.
 
+## Management Console Frontend
+
+When the user requests a management console, admin panel, operations console or internal workbench without specifying a frontend framework, and the project has no established frontend framework, also read and follow `.agents/skills/pear-admin-product-ui/SKILL.md`. Use its Pear Admin scaffold from `https://rcmaker.runchance.com/download/pear-admin-main.zip`. New console backends default to the rcmaker JWT Token component, normally the `admin` guard. The static console must bind to a dedicated `type=app` process group with its own internal port and required static preload; it must not run in the main APP group. An explicit user choice or an existing project frontend takes precedence; do not apply this frontend default to public websites or backend-only tasks.
+
 ## Mandatory Baseline
 
 - Reuse rcmaker capabilities whenever they already exist. Do not recreate them with native PHP or overlapping Composer packages.
@@ -19,6 +23,7 @@ Do not start implementation until the framework capability mapping required by t
 - Treat Windows, SQLite and file cache as possible development settings. Production code must remain compatible with Linux multi-process operation, Redis/cache, MySQL and PostgreSQL through configuration, without hardcoded drivers, paths, endpoints or single-process state.
 - Native PHP remains valid for language constructs, transformations, algorithms and domain logic not already provided by rcmaker.
 - Native clients may be used in isolated AI-generated tests for independent verification, but test exceptions must never enter production code.
+- Treat `vendor/` as strictly read-only. It may be inspected to confirm the installed API or diagnose behavior, but no task may edit, overwrite, delete or add files there, including framework fixes, compatibility work and emergency debugging. Make dependency fixes in the maintained source repository or dependency declarations, then reinstall through the normal package workflow.
 - When rcmaker lacks a required capability, place the custom implementation in the existing responsibility directories under `apps/`, `support/`, `config/`, `public/`, `view/`, `tests/`, `scripts/` or project documentation. Never use the repository root as a default location for business code, services, tasks, tests, demos or temporary files. A developer may explicitly approve a nonstandard path for the current task; keep that exception within its stated scope and do not treat it as permission to bypass unrelated framework rules.
 - Write source code for human review, not minimum character count. Keep normal formatting, descriptive names and clear method boundaries; never emit minified or compressed business code. Every new or modified class and method requires accurate documentation of its responsibility and usage. Public methods must also document parameters, return values, exceptions and any example needed to call them correctly.
 
