@@ -1,5 +1,6 @@
 /vendor
 /spc
+/agent
 /build/*
 /runtime/*
 /ssl

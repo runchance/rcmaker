@@ -6,7 +6,7 @@ require_once __DIR__ . '/artifacts.php';
 
 const BUILDBIN_DEFAULT_EXCLUDE_PREFIXES = [
     '/.agents', '/.claude', '/.codex', '/.continue', '/.cursor', '/.gemini', '/.github',
-    '/.idea', '/.roo', '/.setting', '/.tmp', '/.vscode', '/build', '/coverage',
+    '/.idea', '/.roo', '/.setting', '/.tmp', '/.vscode', '/build', '/coverage', '/data',
     '/node_modules', '/official', '/runtime', '/scripts', '/test', '/tests', '/tools', '/vendor-bin',
 ];
 const BUILDBIN_DEFAULT_EXCLUDE_DIRECTORY_NAMES = [
