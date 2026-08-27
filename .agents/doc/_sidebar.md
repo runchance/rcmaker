@@ -58,6 +58,7 @@
 - 运行与部署
 
   - [PHP-CLI 模式](md/cli.md)
+  - [启动 Banner](md/banner.md)
   - [PHP-FPM / PHP-MOD](md/fpm.md)
   - [混合模式](md/mix.md)
   - [HTTPS / SSL](md/ssl.md)

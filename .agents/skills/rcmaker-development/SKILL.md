@@ -9,7 +9,7 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 
 > **硬性契约：框架已经提供的能力，业务代码必须复用，禁止自行实现同类功能。** 不知道 API、觉得原生写法更快、习惯其他框架、想减少查文档时间，都不是绕过 rcmaker 的理由。AI 生成的独立测试文件和测试夹具可以使用原生能力验证框架行为，但例外不得进入生产目录或被业务代码引用。
 
-> **绝对禁止修改 `vendor/`。** `vendor/` 仅用于只读检索、接口核对和问题定位；任何时候都不得直接编辑、覆盖、删除或新增其中的文件，框架开发、兼容修复和紧急排障也没有例外。需要修复框架或第三方依赖时，必须修改对应的可维护源仓库、依赖声明或上游版本，再通过规范的依赖安装流程更新项目。
+> **项目开发默认禁止修改 `vendor/`。** `vendor/` 通常只用于检索、接口核对和问题定位。只有开发人员明确声明当前任务属于框架维护，并明确授权修改已安装的框架源码时，才能在授权包和任务范围内编辑；不得把这项特许延伸到普通业务开发或其他依赖。
 
 原生 PHP 语法可以正常使用，包括控制流、数组与字符串处理、领域算法、数据转换和框架未覆盖的业务逻辑。禁止的是用原生 PHP 或第三方包重复实现 rcmaker 已有的请求、响应、验证、数据库层、缓存、会话、Token、队列、HTTP 客户端等能力。
 
@@ -26,7 +26,7 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 9. **开发环境不能决定业务实现。** Windows 通常只是单进程开发环境，可能使用 SQLite 和 file 缓存；正式环境通常是 Linux 多进程，并切换到 Redis、MySQL 或 PostgreSQL。业务代码必须通过 rcmaker 配置与组件保持可移植，禁止写死平台、进程数、数据库驱动、SQL 方言、缓存驱动、连接地址或本机路径。
 10. **自定义能力必须遵守项目目录边界。** 只有确认 rcmaker 没有对应能力后，才能新增实现；新增文件必须按职责放入现有 `apps/`、`support/`、`config/`、`public/`、`view/`、`tests/`、`scripts/` 或文档目录。禁止为了省事在项目根目录创建控制器、服务、模型、任务、脚本、测试、样例或临时文件。开发人员在当前交互中明确指定路径或明确批准例外时，可在授权范围内偏离本条目录限制；不得自行推定、扩大或延续该特许。
 11. **代码必须便于人类阅读和审查。** 新增或修改的类、方法必须有准确注释，说明职责、调用场景和使用方法；公开接口还要写清参数、返回值、异常和必要示例。代码必须正常换行和格式化，使用可理解的命名与结构，禁止压缩成难以阅读的一行代码、堆叠表达式或仅追求短小的写法。
-12. **`vendor/` 永远只读。** 可以阅读当前安装版本源码来确认行为，但不得把任何修复直接写入 `vendor/`。发现框架或依赖缺陷时，记录所属包与最小复现，在对应源仓库修复并发布版本，或调整 Composer 依赖后重新安装；不得把手工修改安装产物当作解决方案。
+12. **`vendor/` 默认只读。** 普通项目任务只能阅读当前安装版本源码。仅当开发人员明确指定“框架维护任务”并授权目标包时，框架开发者可以直接编辑该包；修改必须包含测试、文档和可发布的完整实现，不能把临时线上补丁伪装成框架开发。
 
 ## 每次实现前必须读取
 
@@ -35,6 +35,7 @@ description: Develop, extend, debug, optimize, test, and package rcmaker PHP app
 - 数据库、模型、CRUD、列表或分页：再读 [data-access.md](references/data-access.md)。
 - 验证、缓存、Redis、Session、Token、队列或其他组件：再读 [components.md](references/components.md)。
 - 多应用、APP 进程组、Workerman、Swoole、静态应用：读 [runtime-and-processes.md](references/runtime-and-processes.md)。
+- CLI 启动 Banner、颜色、内置变量或进程列表：读 `.agents/doc/md/banner.md`。
 - 开发管理控制台、后台管理、运营平台或内部工作台：如果用户没有指定前端框架且项目没有既有前端框架，同时读取 `../pear-admin-product-ui/SKILL.md`，按其中流程下载并使用 Pear Admin 模板；用户指定的技术选型和项目既有选型优先。
 - 新建管理控制台的后端默认使用 rcmaker Token 组件提供 JWT 鉴权；静态控制台必须绑定独立 `type=app` 进程组并完成核心资源预加载，不得与主 APP 进程组混合运行。具体配置与验收读取 Pear Admin Skill 的 `references/rcmaker-patterns.md` 和 `references/acceptance-checklist.md`。
 - 修改框架源码、请求生命周期、配置继承、Worker 回收或静态预热机制：读 [framework-internals.md](references/framework-internals.md)。
@@ -195,7 +196,7 @@ rg -n "json_encode\s*\(|new\s+\\?PDO|mysqli_|session_start\s*\(|setcookie\s*\(|c
 - 不得在数据采集、网页抓取、第三方 API、文件下载或回调通知中使用原生 cURL、Guzzle、URL 流或 shell 网络命令；统一使用 `curl()` / `curl(true)`。
 - 不得为了一个功能随意安装与框架已有能力重复的 Composer 包。
 - 不得假设其他框架的 `config()`、`request()`、`response()`、ORM 或容器 API 在 rcmaker 中存在。
-- 不得以任何理由修改 `vendor/` 下的文件；框架本身的任务、兼容修复、临时调试和紧急排障均不例外。只允许读取和检索。
+- 未经开发人员明确指定框架维护身份和目标包，不得修改 `vendor/`；即使获得特许，也只能修改授权的框架包，不能顺带改动其他 Composer 依赖。
 - 未经开发人员明确特许，不得在项目根目录随意创建业务 PHP、服务、模型、任务、测试、演示、下载文件或临时输出；必须移动到职责目录，或在任务结束前删除。
 - 不得提交压缩、混淆、无正常换行、命名含糊或需要反向推理才能看懂的业务代码；交付二进制或加密产物不影响源代码必须可读的要求。
 - 不得省略新增或修改类、方法的职责和使用说明，也不得用机械注释代替真实的业务契约。

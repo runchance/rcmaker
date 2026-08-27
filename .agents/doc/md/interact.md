@@ -6,12 +6,6 @@ rcmaker 内置跨平台交互式控制台，可以通过逐级菜单完成二进
 php index.php interact
 ```
 
-Windows 也可以使用专用入口：
-
-```powershell
-php windows.php interact
-```
-
 > [!IMPORTANT]
 > `interact` 是构建、加密、服务管理和签名密钥操作的推荐入口，由框架内的 `RC\Cli` 类独立实现，不会调用或包含 `scripts/*.php`。传统脚本只作为兼容备选，随时可能删除；新项目和新自动化流程不应依赖 `scripts/*.php`。
 
@@ -60,7 +54,7 @@ NO_COLOR=1 php index.php interact
 框架会自动处理 `phar.readonly=0`，不需要修改系统 `php.ini`。构建过程会校验平台、架构、Phar 入口和下载 ZIP 的内部文件名。
 
 > [!IMPORTANT]
-> 构建 Windows 目标时，`RC\Cli\BuildBinary` 使用框架自带的专用启动入口，不读取项目根目录的 `windows.php`。因此旧项目只更新 `runchance/rcmaker-framework` 后即可获得当前 Windows 打包启动逻辑；项目中的 `windows.php` 即使版本较旧、被排除或不存在，也不会影响生成的 `rcmaker.exe`。
+> 所有目标平台的 Phar Stub 都使用 `index.php`。Windows 启动与子进程管理由框架内的 `RC\Cli\WindowsRuntime` 接管，构建器默认排除已废弃的 `windows.php`，因此更新框架包即可同步 Windows 启动逻辑。
 
 > [!NOTE]
 > Windows AArch64 暂未提供。源码加密使用构建机平台和架构对应的 `rcmakerbeast`，加密载荷本身不区分平台；Micro SFX 按目标平台和架构选择，因此启用加密后也可以跨平台、跨架构构建。
@@ -71,6 +65,7 @@ NO_COLOR=1 php index.php interact
 - AI、IDE、版本控制和临时目录：`.agents/`、`.cursor/`、`.claude/`、`.codex/`、`.gemini/`、`.github/`、`.git/`、`.idea/`、`.vscode/`、`.tmp/`
 - 构建、测试和开发工具目录：`build/`、`runtime/`、`scripts/`、`tests/`、`tools/`、`node_modules/`、`coverage/`、`official/`
 - 包管理和开发清单：`composer.json`、`composer.lock`、`package.json`、各类前端 lock 文件、PHPUnit/PHPStan/Psalm 配置、Docker Compose 文件等
+- 旧 Windows 入口与便捷脚本：`windows.php`、`windows.bat`
 - `vendor/` 中依赖包附带的测试、示例、基准和文档目录
 
 默认规则不会笼统排除 JSON、YAML、证书、模板或 `public/` 资源，避免误删业务运行时文件。`.env` 也会保留；不希望把私密配置打进程序时，应在“额外排除路径”中填写 `.env`，并在部署时把它放到可执行程序旁。

@@ -126,7 +126,7 @@ php -d phar.readonly=0 ./scripts/buildBin.php \
 6. 依次拼接 Micro SFX、自定义 ini 头和 Phar
 7. 清理中间文件，只保留最终可执行程序
 
-Phar Stub 会按目标平台选择入口：Linux 和 macOS 使用 `index.php`，Windows 使用 `windows.php`。Windows Micro EXE 以 `micro` SAPI 运行，并把可执行文件所在目录作为工作目录。部分 Micro 构建中的 `PHP_BINARY` 为空，因此框架会从 Phar 运行路径解析当前 `.exe`，再通过自身的 `app start`、`process start` 参数分别派生 APP 和自定义进程，避免 Workerman 在一个 Windows PHP 进程中初始化多个 Worker。目标入口文件不能通过 `--exclude-files` 排除，否则构建会在生成 Phar 前明确失败。
+所有平台的 Phar Stub 都使用 `index.php`。Windows Micro EXE 以 `micro` SAPI 运行，并把可执行文件所在目录作为工作目录；框架内的 `RC\Cli\WindowsRuntime` 会从 Phar 运行路径解析当前 `.exe`，再通过内部子进程参数分别派生主 APP、自定义 APP 和普通进程，避免 Workerman 在一个 Windows PHP 进程中初始化多个 Worker。已废弃的 `windows.php` 默认不进入产物；`index.php` 不能通过 `--exclude-files` 排除，否则构建会在生成 Phar 前明确失败。
 
 脚本会从框架资源服务自动获取所需 ZIP。每个 ZIP 都会通过 `ZipArchive` 校验只能包含一个预期文件；内部地址和文件名不属于公开接口，请勿依赖。
 

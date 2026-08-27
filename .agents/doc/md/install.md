@@ -28,7 +28,7 @@ curl -fsSL https://rcmaker.runchance.com/download/install-php.sh | sh -s -- 8.4 
 irm https://rcmaker.runchance.com/download/install-php.ps1 | iex
 ```
 
-脚本会将 PHP 8.5 和 Composer 安装到 `%LOCALAPPDATA%\rcmaker\bin`，并加入当前用户的 `PATH`。安装位置与项目目录相互独立，因此创建项目后不需要移动 `php.exe`；`windows.bat` 会直接使用 `PATH` 中的 PHP。Windows 当前提供 x86_64 版本。
+脚本会将 PHP 8.5 和 Composer 安装到 `%LOCALAPPDATA%\rcmaker\bin`，并加入当前用户的 `PATH`。安装位置与项目目录相互独立，因此创建项目后不需要移动 `php.exe`；创建项目后直接运行 `php index.php start`。Windows 当前提供 x86_64 版本。
 
 安装后确认两个命令都可用：
 
@@ -72,7 +72,7 @@ Windows：
 composer create-project runchance/rcmaker
 cd rcmaker
 copy .env.example .env
-windows.bat
+php index.php start
 ```
 
 浏览器访问 `http://127.0.0.1:8680/`。看到 `Hello rcmaker!` 后，可以继续完成 [5 分钟开始](md/quick-start.md) 中的第一个 JSON 接口。
@@ -110,8 +110,10 @@ Windows 使用：
 
 ```bat
 copy .env.example .env
-windows.bat
+php index.php start
 ```
+
+`windows.bat` 仍可作为双击启动的便捷包装，但它内部同样执行 `php index.php start`。`windows.php` 已废弃，只用于旧命令兼容，不再承载框架启动逻辑。
 
 ## 手动安装 PHP 与 Composer
 

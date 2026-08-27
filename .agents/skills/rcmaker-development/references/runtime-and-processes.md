@@ -111,6 +111,8 @@ Preload only bounded, frequently requested assets. Large or mutable files may co
 
 ## Develop On Windows, Run On Linux
 
+Use `php index.php start` on every platform. On Windows, the framework-owned `RC\Cli\WindowsRuntime` supervises one child for the main APP and each configured process group; do not call or add logic to the deprecated project-root `windows.php`.
+
 Treat Windows as a development profile when it cannot run the production process topology. A successful Windows single-process run does not validate Linux multi-worker state sharing, locking, transactions, restart behavior or concurrency.
 
 - Keep request handlers stateless. Never depend on a static property, global array, singleton field or local temporary file being visible to another worker.

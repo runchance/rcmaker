@@ -24,7 +24,7 @@ For guided local operations, prefer the framework-native interactive console:
 php index.php interact
 ```
 
-The interactive implementation lives under `RC\Cli` and directly performs artifact download, binary construction, source protection, systemd management, and token-key generation. It must not include, require, spawn, or otherwise depend on `scripts/*.php`. Treat `interact` as the maintained default for local delivery work and user-facing instructions. When building for Windows, the framework builder must inject its framework-owned entry and must not read or copy the project-root `windows.php`; older projects may update only the Composer framework package.
+The interactive implementation lives under `RC\Cli` and directly performs artifact download, binary construction, source protection, systemd management, and token-key generation. It must not include, require, spawn, or otherwise depend on `scripts/*.php`. Treat `interact` as the maintained default for local delivery work and user-facing instructions. Every platform uses `index.php`; on Windows, `RC\Cli\WindowsRuntime` owns supervision and child startup inside the framework package. Never add runtime logic to the deprecated project-root `windows.php`.
 
 Do not recommend `scripts/*.php` for new projects or new automation. Those files are compatibility fallbacks and may be removed at any time. Only when the user explicitly needs an existing unattended workflow that has not migrated may you document the legacy command, clearly labeled as temporary fallback behavior:
 

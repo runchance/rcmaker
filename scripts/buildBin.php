@@ -22,7 +22,7 @@ const BUILDBIN_DEFAULT_EXCLUDE_FILE_NAMES = [
     'docker-compose.yaml', 'docker-compose.yml', 'dockerfile', 'jsconfig.json', 'makefile',
     'package-lock.json', 'package.json', 'phpstan.neon', 'phpstan.neon.dist', 'phpunit.xml',
     'phpunit.xml.dist', 'pnpm-lock.yaml', 'psalm.xml', 'rector.php', 'tsconfig.json',
-    'windows.bat', 'yarn.lock',
+    'windows.bat', 'windows.php', 'yarn.lock',
 ];
 const BUILDBIN_DEFAULT_EXCLUDE_EXTENSIONS = ['map', 'markdown', 'md', 'rst'];
 
@@ -336,7 +336,7 @@ $binFileName = $platform === 'windows' ? 'rcmaker.exe' : 'rcmaker.bin';
 $binFile = ROOT_PATH . '/build/' . $binFileName;
 $sfxArchive = rcartifact_micro_archive($version, $platform, $arch);
 $sfxFile = ROOT_PATH . '/build/' . substr($sfxArchive, 0, -4) . '.sfx';
-$entryFile = $platform === 'windows' ? 'windows.php' : 'index.php';
+$entryFile = 'index.php';
 $customIni = $options['custom-ini'];
 if($customIni){
     if(strpos($customIni,".ini") !== false){

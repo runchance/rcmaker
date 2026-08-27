@@ -7,7 +7,7 @@ cd /d "%~dp0"
 set "PHP_BIN=php"
 if exist "%~dp0php.exe" set "PHP_BIN=%~dp0php.exe"
 
-"%PHP_BIN%" windows.php start
+"%PHP_BIN%" index.php start
 if errorlevel 1 (
     echo.
     echo rcmaker Windows 启动失败，请检查 PHP 环境和配置。

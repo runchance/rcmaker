@@ -2,11 +2,11 @@
 
 ## 环境要求
 
-Windows 平台不推荐使用 CLI 模式启动项目，自定义进程相关能力也不适合在 Windows 下使用。
+Linux、macOS 和 Windows 都统一使用 `php index.php start`。Windows 由框架内置主控按进程组启动主 APP、自定义 APP 和普通进程，适合本地开发验证；正式的多进程部署和资源治理仍建议使用 Linux。
 
 1. PHP 版本 8.1 及以上。
-2. 必须安装 [pcntl 扩展](http://cn2.php.net/manual/zh/book.pcntl.php)，Windows 平台不支持。
-3. 必须安装 [posix 扩展](http://cn2.php.net/manual/zh/book.posix.php)，Windows 平台不支持。
+2. Linux 多进程模式必须安装 [pcntl 扩展](http://cn2.php.net/manual/zh/book.pcntl.php)；Windows 不需要。
+3. Linux 多进程模式必须安装 [posix 扩展](http://cn2.php.net/manual/zh/book.posix.php)；Windows 不需要。
 4. 推荐安装 [event 扩展](http://php.net/manual/zh/book.event.php)。
 5. 需要启用以下函数。某些集成环境可能会默认禁用其中一部分函数：
 
@@ -69,6 +69,10 @@ php index.php reload
 > 以 debug 方式启动时，代码中的 `echo`、`var_dump`、`print` 等输出会直接显示在终端。
 
 > 以 daemon 方式启动后，代码中的 `echo`、`var_dump`、`print` 等输出会默认重定向到 `./runtime/logs/RC_Workerman(Swoole).log`。
+
+## 启动 Banner
+
+`config/app.php` 中 `cli_banner=true` 时，框架使用 Workerman 5.x 风格的默认启动 Banner。这个开关不读取 `.env`；项目可以在 `config/banner.php` 预设产品名称、版本、多行颜色、运行变量和可选进程列表，完整说明参考 [启动 Banner](md/banner.md)。
 
 ## 支持库
 

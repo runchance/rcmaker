@@ -25,11 +25,11 @@ cp .env.example .env
 php index.php start
 ```
 
-Windows 将最后两行换成：
+Windows 将复制命令换成：
 
 ```bat
 copy .env.example .env
-windows.bat
+php index.php start
 ```
 
 > [!TIP]

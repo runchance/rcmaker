@@ -34,6 +34,7 @@
 | 文档 | 何时读取 |
 | --- | --- |
 | `.agents/doc/md/cli.md` | Workerman/Swoole 启动和引擎选择 |
+| `.agents/doc/md/banner.md` | 默认及自定义启动 Banner、变量、颜色和进程列表 |
 | `.agents/doc/md/fpm.md` | PHP-FPM/PHP-MOD 和反向代理 CLI |
 | `.agents/doc/md/mix.md` | Web 与 CLI 混合模式 |
 | `.agents/doc/md/ssl.md` | 主服务和自定义进程 SSL |

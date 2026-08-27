@@ -56,7 +56,7 @@ php index.php start
 Windows：
 
 ```bat
-windows.bat
+php index.php start
 ```
 
 浏览器访问：

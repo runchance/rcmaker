@@ -18,6 +18,7 @@
 ├── config                        配置目录
 │   ├── app.php                   应用配置
 │   ├── autoload.php              这里配置的文件会被自动加载
+│   ├── banner.php                CLI启动Banner与进程列表配置
 │   ├── bootstrap.php             进程启动时载入的回调类
 │   ├── cache.php                 缓存组件配置文件
 │   ├── db.php                    数据库配置
