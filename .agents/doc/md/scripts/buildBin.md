@@ -136,20 +136,27 @@ Linux 或 macOS：
 
 ```shell
 cp .env.example ./build/.env
-./build/rcmaker.bin start
+./build/rcmaker.bin
+
+# 后台运行
+./build/rcmaker.bin start -d
 ```
 
 Windows：
 
 ```bat
 copy .env.example build\.env
-build\rcmaker.exe start
+build\rcmaker.exe
 ```
+
+独立程序没有参数时等同于前台执行 `start`。Windows 产物可以直接双击，框架会在输出 Banner 前将进程代码页切换为 UTF-8，避免中文在传统控制台中显示为乱码。Linux 和 macOS 仍可显式使用 `start -d`、`status`、`stop`、`reload` 等 Workerman 命令；Windows 独立程序由框架监督器以前台方式管理进程。
 
 > [!WARNING]
 > 可执行程序只能在对应平台和架构运行。更新代码后需要重新打包并重启，不支持通过 `reload` 把外部源码热更新进已生成的单文件程序。
 
-运行时日志和临时文件会写到可执行程序所在目录的 `runtime/`。通常还应把 `.env` 放在可执行程序同目录；业务需要写入 `public/` 时，也应把可写目录外置，并通过配置指向该目录。
+默认情况下，程序直接读取 PHAR 内的 `public/` 和 `view/`，无需把静态文件复制到可执行程序旁。运行时日志和临时文件写到可执行程序所在目录的 `runtime/`，外部 `.env` 也放在可执行程序同目录。
+
+PHAR 内文件只读。业务需要上传文件、生成公开文件或独立更新前端资源时，应把整个 `public/` 外置，并通过配置指向绝对目录：
 
 ```ini
 [app]

@@ -53,6 +53,18 @@ NO_COLOR=1 php index.php interact
 
 框架会自动处理 `phar.readonly=0`，不需要修改系统 `php.ini`。构建过程会校验平台、架构、Phar 入口和下载 ZIP 的内部文件名。
 
+独立程序不带参数时默认按前台 `start` 启动：
+
+```shell
+# Linux / macOS
+./build/rcmaker.bin
+
+# 需要后台运行时仍可显式传参
+./build/rcmaker.bin start -d
+```
+
+Windows 可以直接双击 `build/rcmaker.exe`，也可以在终端运行 `build\rcmaker.exe`，两种方式都等同于 `build\rcmaker.exe start`。框架会在 Windows 独立程序输出 Banner 前把进程代码页切换为 UTF-8，中文配置无需转成 GBK。
+
 > [!IMPORTANT]
 > 所有目标平台的 Phar Stub 都使用 `index.php`。Windows 启动与子进程管理由框架内的 `RC\Cli\WindowsRuntime` 接管，构建器默认排除已废弃的 `windows.php`，因此更新框架包即可同步 Windows 启动逻辑。
 
@@ -69,6 +81,8 @@ NO_COLOR=1 php index.php interact
 - `vendor/` 中依赖包附带的测试、示例、基准和文档目录
 
 默认规则不会笼统排除 JSON、YAML、证书、模板或 `public/` 资源，避免误删业务运行时文件。`.env` 也会保留；不希望把私密配置打进程序时，应在“额外排除路径”中填写 `.env`，并在部署时把它放到可执行程序旁。
+
+二进制默认直接读取包内 `public/` 和 `view/`，静态应用可以从 PHAR 预加载及返回资源，不需要附带外部静态目录。包内文件只读；上传目录、运行时生成文件或需要单独更新的前端资源，应通过 `.env` 的 `app.public_path` 指向外部绝对路径。日志、PID、缓存和模板编译结果始终写入外部 `runtime/`。
 
 ## 加密 PHP
 

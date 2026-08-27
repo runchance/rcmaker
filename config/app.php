@@ -26,14 +26,16 @@ return [
   'index' => rcEnv('app.index',['index','index']),
   //默认应用名,多应用模式下当URL第一段不是应用名时,默认使用该应用[全局]
   'default_app' => rcEnv('app.default_app','index'),
-  //public路径，如果自定义改动请用绝对路径
+  //public路径，二进制中默认读取包内只读目录；需要写入或独立更新时请配置外部绝对路径
   'public_path' => rcEnv('app.public_path',null),
-  //runtime路径，如果自定义改动请用绝对路径
+  //runtime可写路径，二进制中默认位于可执行文件旁；自定义时请使用绝对路径
   'runtime_path' => rcEnv('app.runtime_path',null),
-  //ssl路径，如果自定义改动请用绝对路径
+  //ssl路径，二进制中默认读取包内目录；需要独立更新证书时请配置外部绝对路径
   'ssl_path' => rcEnv('app.ssl_path',null),
   //app路径，如果自定义改动请用绝对路径
   'apps_path' => rcEnv('app.apps_path',null),
+  //view路径，如果自定义改动请用绝对路径
+  'view_path' => rcEnv('app.view_path',null),
   //app命名空间前缀,如果打包二进制文件可以定义该项用于自动加载[全局]
   'app_name' => rcEnv('app.app_name','app'),
   //独立APP设置

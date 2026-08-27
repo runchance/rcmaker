@@ -52,7 +52,7 @@ return [
     //最大请求数,超出后会自动杀死进程并重新拉取一个新的进程
     'max_request'          => rcEnv('swoole.max_request', 1000000),
     //日志文件路径
-    'log_file'             => phar_path() . '/runtime/logs/RC_Swoole.log',
+    'log_file'             => runtime_path() . '/logs/RC_Swoole.log',
     //日志等级
     'log_level'            => SWOOLE_LOG_INFO,
     //设置最大数据包尺寸，单位为字节

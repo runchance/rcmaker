@@ -36,6 +36,19 @@
 - `static_only=true` 时，静态文件未命中会直接返回 404，PHP 文件和动态控制器均不会执行。
 - 如果需要放到其他目录，也可以直接写绝对路径。
 
+### 二进制中的静态目录
+
+构建独立程序时，项目 `public/` 会进入 PHAR。未配置 `app.public_path` 时，`public_path()` 在二进制中指向包内 `public/`，静态应用、静态预热和普通静态文件读取都会使用这个路径，不需要再把 `public/adminstatic` 复制到可执行程序旁。
+
+包内目录只读。上传文件、运行时生成的图片或需要独立更新的前端资源，应在外部准备目录，并通过 `.env` 整体切换：
+
+```ini
+[app]
+public_path = /home/www/rcmaker/public
+```
+
+Windows 使用绝对路径，例如 `D:\www\rcmaker\public`。配置后，`public_path()` 以及所有相对 `document_root` 都以该外部目录为准；不要在业务代码中自行判断 PHAR 或拼接另一套静态路径。
+
 例如访问：
 
 ```text
@@ -104,9 +117,11 @@ public/upload/index.html
 - 只预加载文本类静态资源：`css`、`js`、`html`、`htm`、`json`、`svg`、`txt`、`xml`
 - 预加载发生在应用进程启动时，不等用户第一次访问才触发
 - 后续请求直接从内存返回 body，不再每次读取文件
+- PHAR 内的静态目录同样支持遍历和预加载；未被预加载的包内文件仍可按请求读取
 - 如果同时开启 `enable_static_gzip`，会一并缓存 gzip 后内容
 - 预加载会在单个静态目录达到 `static_preload_time_limit` 后停止，避免启动耗时过长
 - 预加载哪些文件由 `static_preload_extensions` 决定
+- 启动日志只显示静态应用名称、文件数量和耗时，不输出物理目录或 PHAR 路径
 
 适用场景：
 
