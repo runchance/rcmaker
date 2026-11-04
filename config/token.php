@@ -23,12 +23,12 @@ return [
         'type' => 'Bearer',
         //传值校验
         'keyName' => 'token',
-        // access令牌秘钥
-        'access_secret_key' => 'rcmaker2022authaccess8f9g9i',
+        // 使用部署时生成的稳定随机密钥；没有配置时明确拒绝签发。
+        'access_secret_key' => rcEnv('token.access_secret_key', ''),
         // access令牌过期时间，单位：秒。默认 2 小时
         'access_expired' => 7200,
-        // refresh令牌秘钥
-        'refresh_secret_key' => 'rcmaker2022authrefresh5v6g8y',
+        // 刷新密钥应独立生成，不与 access 密钥共用。
+        'refresh_secret_key' => rcEnv('token.refresh_secret_key', ''),
         // refresh令牌过期时间，单位：秒。默认 7 天
         'refresh_expired' => 604800,
         // refresh 令牌是否禁用，默认不禁用 false

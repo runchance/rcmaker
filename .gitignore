@@ -3,6 +3,7 @@
 /agent
 /build/*
 /runtime/*
+/data/database/
 /ssl
 /official
 session_*

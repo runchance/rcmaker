@@ -19,7 +19,9 @@ return [
         
      ],
      'sqlite'=>[
-        'database' => rcEnv('sqlite.database',BASE_PATH.'/RCMAKER.db'),
+        // 兼容已有默认库；新项目持久数据放在二进制外部，不放 runtime 或 PHAR 内。
+        'database' => rcEnv('sqlite.database', is_file(phar_path().'/RCMAKER.db')
+            ? phar_path().'/RCMAKER.db' : phar_path().'/data/database/rcmaker.sqlite'),
         'prefix' => rcEnv('sqlite.prefix',''),
         'username' => rcEnv('sqlite.username',''),
         'password'=>rcEnv('sqlite.password',''),
