@@ -1,5 +1,43 @@
 ﻿# rcmaker
 
+> [!IMPORTANT]
+> ## 项目已升级至 rcmaker-php
+>
+> **本项目已停止维护，后续开发、功能更新及问题修复统一转移至 rcmaker-php。**
+>
+> **新项目地址：[rcmaker-php](https://github.com/runchance/rcmaker-php)**
+>
+> **迁移指南：[从旧 rcmaker / rcmaker-framework 迁移到 rcmaker-php](https://rcmaker.runchance.com/doc/#/md/migration)**
+>
+> ### 为什么升级？
+>
+> **rcmaker-php 是 rcmaker 的新一代升级版本。**
+>
+> 新版本进一步简化了整体架构，不再依赖额外的框架壳，仅使用框架本身即可独立运行。
+>
+> - **更高集成度：** 框架与运行能力深度整合，减少额外组件依赖。
+> - **更简洁的架构：** 无需单独的框架壳，降低开发与维护复杂度。
+> - **更便捷的部署：** 简化项目初始化、运行与交付流程。
+> - **持续开发维护：** 后续新功能、优化及问题修复将集中在新项目。
+>
+> 建议新项目直接使用 **rcmaker-php**，现有项目请参考迁移指南逐步升级。
+>
+> ---
+>
+> ### Project Moved to rcmaker-php
+>
+> **This repository is no longer maintained.**
+>
+> [rcmaker-php](https://github.com/runchance/rcmaker-php) is the next-generation upgrade of rcmaker, featuring a more integrated architecture that runs independently without requiring a separate framework shell.
+>
+> **New Repository:** https://github.com/runchance/rcmaker-php
+>
+> **Migration Guide:** [Migrating from rcmaker / rcmaker-framework](https://rcmaker.runchance.com/doc/#/md/migration)
+>
+> ---
+>
+> 以下内容为旧版项目文档，仅供历史参考。
+
 **用 PHP 快速开发，像 Go 应用一样交付。**
 
 <https://rcmaker.runchance.com>
