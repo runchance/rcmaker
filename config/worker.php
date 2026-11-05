@@ -17,6 +17,8 @@ return [
     'name'                 => rcEnv('workerman.name', 'RC_workerman'),
     //进程数量,默认CPU核数x2
     'count'                => rcEnv('workerman.count', 16),
+    //仅 Windows 使用；旧项目未设置时仍为 1。大于 1 的监听组需要 sockets 扩展，Linux 仍使用 count。
+    'windows_count'        => rcEnv('workerman.windows_count', 1),
     //是否不同协议允许共用端口
     'reusePort'            => rcEnv('workerman.reusePort', true) ? true : false,
     //子进程的所属用户
